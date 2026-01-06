@@ -1,26 +1,29 @@
 @import "tailwindcss";
 
+/* =========================
+   SeaVitae Brand Variables
+   ========================= */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Background */
+  --sv-mist: #EFEFEF;
+
+  /* Text colors */
+  --sv-body: #171717;          /* Default body text */
+  --sv-navy: #000435;          /* Headlines & strong emphasis */
+
+  /* Interactive colors */
+  --sv-ocean: #31439B;         /* Primary CTAs & key links */
+  --sv-seafoam: #8DDCDC;       /* Hover, focus, active, success */
+
+  /* App defaults */
+  --background: var(--sv-mist);
+  --foreground: var(--sv-body);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Global base styles */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }

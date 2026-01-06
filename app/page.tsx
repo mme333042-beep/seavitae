@@ -1,65 +1,135 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <header>
+        <nav>
+          <span>SeaVitae</span>
+          <Link href="/login">Login</Link>
+        </nav>
+      </header>
+
+      <main>
+        {/* Hero Section */}
+        <section id="hero">
+          <h1>SeaVitae</h1>
+          <p className="tagline">A sea of careers, searchable.</p>
+
+          <div className="hero-descriptions">
+            <p>
+              <strong>For Employers:</strong> Find top talent by searching CVs
+              directly. No job posts, no applications.
+            </p>
+            <p>
+              <strong>For Jobseekers:</strong> Create your CV profile and be
+              discovered by employers.
+            </p>
+          </div>
+
+          <div className="hero-cta">
+            <Link href="/employer">I&apos;m Hiring</Link>
+            <Link href="/jobseeker">I Want to Be Discovered</Link>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section id="how-it-works">
+          <h2>How It Works</h2>
+
+          <div className="two-column">
+            <article>
+              <h3>For Employers</h3>
+              <ul>
+                <li>Search CVs by skills, role, and location</li>
+                <li>Filter to find the right candidates</li>
+                <li>Request interviews, virtual or in-person</li>
+              </ul>
+            </article>
+
+            <article>
+              <h3>For Jobseekers</h3>
+              <ul>
+                <li>Create a CV profile with skills, experience, and location</li>
+                <li>Be found by employers searching for your expertise</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        {/* Why SeaVitae Section */}
+        <section id="why-seavitae">
+          <h2>Why SeaVitae</h2>
+
+          <p>
+            <strong>SeaVitae is not a job board.</strong>
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+          <ul>
+            <li>No job listings</li>
+            <li>No applications</li>
+            <li>No endless scrolling</li>
+          </ul>
+
+          <p>
+            Employers discover talent by searching CVs directly.
+            <br />
+            Jobseekers don&apos;t apply&mdash;they get found.
+          </p>
+
+          <h3>Key Differentiators</h3>
+          <ul>
+            <li>Discovery over applications</li>
+            <li>Signal over noise</li>
+            <li>Direct and professional</li>
+          </ul>
+        </section>
+
+        {/* Trust & Professionalism Section */}
+        <section id="trust">
+          <h2>Trust and Professionalism</h2>
+
+          <p>
+            SeaVitae is built for professionals and employers who value quality
+            connections.
+          </p>
+
+          <ul>
+            <li>Profiles are structured for clarity</li>
+            <li>Communication stays professional</li>
+            <li>Both sides can focus on what matters</li>
+          </ul>
+        </section>
+
+        {/* Invitation Section */}
+        <section id="invite">
+          <h2>Invite Professionals</h2>
+          <p>
+            Know someone who should be here? Invite them to create a profile.
+          </p>
+          <Link href="/invite">Invite a Professional</Link>
+        </section>
+
+        {/* Final CTA Section */}
+        <section id="cta">
+          <h2>Get Started</h2>
+          <p>Create your profile or start searching.</p>
+          <div className="cta-buttons">
+            <Link href="/employer">I&apos;m Hiring</Link>
+            <Link href="/jobseeker">I Want to Be Discovered</Link>
+          </div>
+        </section>
       </main>
-    </div>
+
+      <footer>
+        <p>SeaVitae</p>
+        <p>A sea of careers, searchable.</p>
+        <nav>
+          <Link href="/terms">Terms of Service</Link>
+          <span> | </span>
+          <Link href="/privacy">Privacy Policy</Link>
+        </nav>
+      </footer>
+    </>
   );
 }
