@@ -1,7 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(dir:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run db:generate:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(where:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run lint:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nMajor update: UI/UX polish, security hardening, and new features\n\nUI/UX Improvements:\n- Comprehensive CSS design system with consistent spacing, typography, and colors\n- Responsive layouts for mobile, tablet, and desktop\n- Alert banners and status components with proper styling\n- Header and footer alignment fixes\n- Social media links \\(X, LinkedIn\\) in footer\n\nSecurity Hardening:\n- Added authentication to /api/notifications endpoint\n- Added security headers in middleware \\(X-Content-Type-Options, X-Frame-Options, etc.\\)\n- Employer verification checks for messages, interviews, and CV saves\n- Sanitized error messages in API routes\n- Removed debug logs exposing user data\n\nNew Features:\n- Admin dashboard for employer verification\n- About Us and Get Started pages\n- Employer profile editing\n- Saved CVs management\n- Interview management for employers\n- Jobseeker signup flow\n- Auth callback and confirmation pages\n\nBackend:\n- Supabase integration with proper RLS policies\n- Message, interview, and employer services\n- PDF generation utilities\n- Email notification system\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix Vercel deployment: Remove Express backend\n\nBREAKING: Remove entire backend/ folder containing Express server\n- Express is not compatible with Vercel deployment\n- Next.js app uses Supabase directly for all data operations\n\nChanges:\n- Removed backend/ folder \\(31 files\\)\n- Added security headers to next.config.ts\n- Added backend/ to .gitignore\n\nSecurity headers now handled by:\n- next.config.ts headers\\(\\) function\n- middleware.ts \\(edge-compatible\\)\n\nNo Express, no cors, no helmet, no express-rate-limit.\nPure Next.js App Router + Supabase.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

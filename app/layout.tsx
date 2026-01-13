@@ -9,8 +9,41 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SeaVitae",
-  description: "A CV-first talent discovery platform",
+  title: {
+    default: "SeaVitae",
+    template: "%s | SeaVitae",
+  },
+  description: "A sea of careers, searchable.",
+  metadataBase: new URL("https://seavitae.com"),
+
+  openGraph: {
+    title: "SeaVitae",
+    description: "A sea of careers, searchable.",
+    url: "https://seavitae.com",
+    siteName: "SeaVitae",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "SeaVitae – A sea of careers, searchable",
+      },
+    ],
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "SeaVitae",
+    description: "A sea of careers, searchable.",
+    images: ["/og-image.png"],
+  },
+
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
