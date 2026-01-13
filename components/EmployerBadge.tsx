@@ -25,10 +25,23 @@ export default function EmployerBadge({
   const category = getEmployerCategory(employer);
 
   return (
-    <aside aria-label="Employer Information">
+    <aside aria-label="Employer Information" className="employer-badge">
       <header>
         <p>
           <strong>{displayName}</strong>
+          {status.hasVerifiedDetails && (
+            <span className="verified-badge" title="Verified employer">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+              </svg>
+            </span>
+          )}
         </p>
         <p>
           <small>{typeLabel}</small>
@@ -41,13 +54,6 @@ export default function EmployerBadge({
 
         <dt>Location</dt>
         <dd>{employer.city || "Not specified"}</dd>
-
-        {status.hasVerifiedDetails && (
-          <>
-            <dt>Status</dt>
-            <dd>Verified details</dd>
-          </>
-        )}
       </dl>
 
       {showDetails && (

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import SoftLaunchBanner from "@/components/SoftLaunchBanner";
 import FeedbackWidget from "@/components/FeedbackWidget";
 
 const inter = Inter({
@@ -22,7 +21,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <SoftLaunchBanner />
         {children}
         <FeedbackWidget />
       </body>

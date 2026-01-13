@@ -21,6 +21,9 @@ export type AnalyticsEvent =
   | "message_sent"
   | "message_read"
   | "invite_sent"
+  | "invite_link_copied"
+  | "invite_created"
+  | "invite_code_copied"
   | "profile_completed"
   | "feedback_submitted";
 

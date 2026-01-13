@@ -1,27 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   REPORT_REASONS,
   ReportReason,
   validateReport,
 } from "@/lib/reporting";
+import { getCurrentUserWithProfile } from "@/lib/supabase/auth";
+import { getEmployerById } from "@/lib/supabase/services/employers";
+import { createReport } from "@/lib/supabase/services/reports";
 
 export default function ReportEmployerProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const employerId = params.id as string;
 
   const [reason, setReason] = useState<ReportReason | "">("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [employerName, setEmployerName] = useState<string>("this employer");
 
-  // Mock employer name - in production this would come from a database
-  const employerName = "TechCorp Inc.";
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const userProfile = await getCurrentUserWithProfile();
+        if (!userProfile) {
+          router.push("/login");
+          return;
+        }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+        // Get the employer's name
+        const employer = await getEmployerById(employerId);
+        if (employer) {
+          setEmployerName(
+            employer.employer_type === "company" && employer.company_name
+              ? employer.company_name
+              : employer.display_name
+          );
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [employerId, router]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const validation = validateReport(reason, note);
@@ -30,8 +62,38 @@ export default function ReportEmployerProfilePage() {
       return;
     }
 
-    // Mock submission - in production this would save to database
-    setSubmitted(true);
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const result = await createReport({
+        targetType: "employer_profile",
+        targetId: employerId,
+        reason: reason as ReportReason,
+        note: note || undefined,
+      });
+
+      if (!result.success) {
+        setError(result.error || "Failed to submit report");
+        setSubmitting(false);
+        return;
+      }
+
+      setSubmitted(true);
+      setSubmitting(false);
+    } catch (err) {
+      console.error("Error submitting report:", err);
+      setError("Failed to submit report. Please try again.");
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <main>
+        <p>Loading...</p>
+      </main>
+    );
   }
 
   if (submitted) {
@@ -65,6 +127,12 @@ export default function ReportEmployerProfilePage() {
       </header>
 
       <section>
+        {error && (
+          <div role="alert" className="alert alert-error">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <fieldset>
             <legend>Reason for Report</legend>
@@ -110,10 +178,10 @@ export default function ReportEmployerProfilePage() {
             </p>
           </div>
 
-          {error && <p role="alert">{error}</p>}
-
           <div>
-            <button type="submit">Submit Report</button>
+            <button type="submit" disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Report"}
+            </button>
           </div>
         </form>
       </section>

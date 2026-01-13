@@ -1,0 +1,211 @@
+// SeaVitae Database Schema
+// CV Discovery Platform - SQLite with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER & AUTHENTICATION
+// ============================================================================
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  passwordHash      String
+  role              String    // JOBSEEKER or EMPLOYER
+  emailVerified     Boolean   @default(false)
+  emailVerifyToken  String?   @unique
+  emailVerifyExpiry DateTime?
+  resetToken        String?   @unique
+  resetTokenExpiry  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  jobseekerProfile JobseekerProfile?
+  employerProfile  EmployerProfile?
+  sentMessages     Message[]         @relation("SentMessages")
+  receivedMessages Message[]         @relation("ReceivedMessages")
+}
+
+// ============================================================================
+// JOBSEEKER PROFILE & CV
+// ============================================================================
+
+model JobseekerProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  fullName         String
+  city             String
+  preferredRole    String
+  bio              String
+  age              Int?
+  yearsExperience  Int      @default(0)
+  isVisible        Boolean  @default(false)
+  lastUpdated      DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills         Skill[]
+  experiences    Experience[]
+  education      Education[]
+  languages      Language[]
+  certifications Certification[]
+  projects       Project[]
+  publications   Publication[]
+  savedByCVs     SavedCV[]
+}
+
+model Skill {
+  id                 String           @id @default(uuid())
+  jobseekerProfileId String
+  name               String
+  createdAt          DateTime         @default(now())
+
+  jobseekerProfile JobseekerProfile @relation(fields: [jobseekerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([jobseekerProfileId, name])
+}
+
+model Experience {
+  id                 String           @id @default(uuid())
+  jobseekerProfileId String
+  title              String
+  company            String
+  location           String
+  startDate          DateTime
+  endDate            DateTime?
+  description        String
+  order              Int              @default(0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  jobseekerProfile JobseekerProfile @relation(fields: [jobseekerProfileId], references: [id], onDelete: Cascade)
+}
+
+model Education {
+  id                 String           @id @default(uuid())
+  jobseekerProfileId String
+  degree             String
+  institution        String
+  location           String
+  graduationYear     Int
+  order              Int              @default(0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  jobseekerProfile JobseekerProfile @relation(fields: [jobseekerProfileId], references: [id], onDelete: Cascade)
+}
+
+model Language {
+  id                 String   @id @default(uuid())
+  jobseekerProfileId String
+  name               String
+  proficiency        String
+  createdAt          DateTime @default(now())
+
+  jobseekerProfile JobseekerProfile @relation(fields: [jobseekerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([jobseekerProfileId, name])
+}
+
+model Certification {
+  id                 String           @id @default(uuid())
+  jobseekerProfileId String
+  name               String
+  issuer             String
+  year               Int
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  jobseekerProfile JobseekerProfile @relation(fields: [jobseekerProfileId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id                 String           @id @default(uuid())
+  jobseekerProfileId String
+  name               String
+  description        String
+  link               String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  jobseekerProfile JobseekerProfile @relation(fields: [jobseekerProfileId], references: [id], onDelete: Cascade)
+}
+
+model Publication {
+  id                 String           @id @default(uuid())
+  jobseekerProfileId String
+  title              String
+  venue              String
+  link               String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  jobseekerProfile JobseekerProfile @relation(fields: [jobseekerProfileId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================================
+// EMPLOYER PROFILE
+// ============================================================================
+
+model EmployerProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  type              String
+  displayName       String
+  city              String?
+  isVerified        Boolean  @default(false)
+  companyName       String?
+  website           String?
+  contactPersonName String?
+  contactPersonRole String?
+  linkedIn          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savedCVs SavedCV[]
+}
+
+// ============================================================================
+// SAVED CVs (SNAPSHOTS)
+// ============================================================================
+
+model SavedCV {
+  id                 String   @id @default(uuid())
+  employerProfileId  String
+  jobseekerProfileId String
+  version            Int      @default(1)
+  savedAt            DateTime @default(now())
+  snapshotData       String
+
+  employerProfile  EmployerProfile  @relation(fields: [employerProfileId], references: [id], onDelete: Cascade)
+  jobseekerProfile JobseekerProfile @relation(fields: [jobseekerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([employerProfileId, jobseekerProfileId, version])
+}
+
+// ============================================================================
+// MESSAGING
+// ============================================================================
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+}

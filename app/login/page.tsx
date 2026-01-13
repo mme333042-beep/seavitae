@@ -3,14 +3,14 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { signIn } from "@/lib/supabase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {}
-  );
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email") as string;
@@ -32,39 +32,76 @@ export default function LoginPage() {
     }
 
     setErrors({});
-    // No backend logic - route to employer dashboard for now
-    router.push("/employer/dashboard");
+    setLoading(true);
+
+    try {
+      const result = await signIn({ email, password });
+
+      if (!result.success) {
+        setErrors({ general: result.error || "Failed to sign in" });
+        setLoading(false);
+        return;
+      }
+
+      // Redirect based on role and profile status
+      if (result.redirectPath) {
+        router.push(result.redirectPath);
+      } else {
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrors({ general: "An unexpected error occurred. Please try again." });
+      setLoading(false);
+    }
   }
 
   return (
     <main>
-      <section>
+      <header>
         <h1>Login to SeaVitae</h1>
-
         <p>Welcome back. Enter your credentials to continue.</p>
+      </header>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div>
-            <label htmlFor="email">Email</label>
-            <input type="email" id="email" name="email" required />
-            {errors.email && <p role="alert">{errors.email}</p>}
-          </div>
+      <section>
+        <div className="card" style={{ maxWidth: "var(--max-width-narrow)" }}>
+          {errors.general && (
+            <div role="alert" className="alert alert-error">
+              {errors.general}
+            </div>
+          )}
 
-          <div>
-            <label htmlFor="password">Password</label>
-            <input type="password" id="password" name="password" required />
-            {errors.password && <p role="alert">{errors.password}</p>}
-          </div>
+          <form onSubmit={handleSubmit} noValidate>
+            <div style={{ marginBottom: "var(--space-lg)" }}>
+              <label htmlFor="email">Email</label>
+              <input type="email" id="email" name="email" required />
+              {errors.email && <p role="alert">{errors.email}</p>}
+            </div>
 
-          <div>
-            <button type="submit">Login</button>
-          </div>
-        </form>
+            <div style={{ marginBottom: "var(--space-lg)" }}>
+              <label htmlFor="password">Password</label>
+              <input type="password" id="password" name="password" required />
+              {errors.password && <p role="alert">{errors.password}</p>}
+            </div>
 
-        <p>
-          Don't have an account? <Link href="/employer">Sign up as Employer</Link>{" "}
-          or <Link href="/jobseeker">Sign up as Jobseeker</Link>
-        </p>
+            <div>
+              <button type="submit" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div style={{ marginTop: "var(--space-xl)", textAlign: "center" }}>
+          <p>
+            Don&apos;t have an account?
+          </p>
+          <p>
+            <Link href="/employer">Sign up as Employer</Link>
+            {" or "}
+            <Link href="/jobseeker">Sign up as Jobseeker</Link>
+          </p>
+        </div>
       </section>
     </main>
   );

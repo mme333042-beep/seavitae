@@ -33,29 +33,30 @@ export default function CVPreviewCard({ candidate }: CVPreviewCardProps) {
       : candidate.bio;
 
   return (
-    <article>
+    <article className="cv-preview-card">
       <header>
         <h3>{candidate.fullName}</h3>
-        <p>{candidate.city}</p>
-        <p>{candidate.preferredRole}</p>
+        <p className="meta">{candidate.city}</p>
+        <p className="meta">{candidate.preferredRole}</p>
       </header>
 
       <section>
-        <h4>Skills</h4>
-        <ul>
+        <div className="skills">
           {displaySkills.map((skill, index) => (
-            <li key={index}>{skill}</li>
+            <span key={index} className="skill-tag">{skill}</span>
           ))}
-        </ul>
+        </div>
       </section>
 
       <section>
         <p>{bioExcerpt}</p>
       </section>
 
-      <footer>
-        <Link href={`/cv/${candidate.id}`}>View Profile</Link>
-        <Link href={`/cv/${candidate.id}/request-interview`}>
+      <footer className="actions">
+        <Link href={`/cv/${candidate.id}`} className="btn btn-secondary">
+          View Profile
+        </Link>
+        <Link href={`/cv/${candidate.id}/request-interview`} className="btn">
           Request Interview
         </Link>
       </footer>

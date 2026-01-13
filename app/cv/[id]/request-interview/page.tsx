@@ -3,53 +3,214 @@
 import { useRouter, useParams } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  checkRateLimit,
-  recordAction,
-  getRateLimitStatus,
-} from "@/lib/rateLimiting";
 import { trackEvent } from "@/lib/analytics";
-
-type InterviewType = "virtual" | "physical" | "";
+import { trackInterviewRequested } from "@/lib/posthog";
+import { getCurrentUserWithProfile } from "@/lib/supabase/auth";
+import { getMyEmployerProfile } from "@/lib/supabase/services/employers";
+import { getJobseekerById } from "@/lib/supabase/services/jobseekers";
+import {
+  createInterviewRequest,
+  hasExistingInterviewRequest,
+} from "@/lib/supabase/services/interviews";
+import { notifyInterviewRequest } from "@/lib/notifications";
+import type { Employer, Jobseeker, InterviewType } from "@/lib/supabase/types";
 
 export default function RequestInterviewPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
 
-  const [interviewType, setInterviewType] = useState<InterviewType>("");
+  const [interviewType, setInterviewType] = useState<"video" | "in_person" | "phone" | "">("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [rateLimitError, setRateLimitError] = useState("");
-  const [rateLimitStatus, setRateLimitStatus] = useState<{
-    used: number;
-    limit: number;
-    remaining: number;
-  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [employer, setEmployer] = useState<Employer | null>(null);
+  const [jobseeker, setJobseeker] = useState<Jobseeker | null>(null);
+  const [existingRequest, setExistingRequest] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    setRateLimitStatus(getRateLimitStatus("interview_request"));
-  }, []);
+    async function loadData() {
+      try {
+        const userProfile = await getCurrentUserWithProfile();
+        if (!userProfile) {
+          router.push("/login");
+          return;
+        }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        if (userProfile.role !== "employer") {
+          router.push("/jobseeker/dashboard");
+          return;
+        }
+
+        // Store current user ID for notifications
+        setCurrentUserId(userProfile.user?.id || null);
+
+        const employerProfile = await getMyEmployerProfile();
+        if (!employerProfile) {
+          router.push("/employer");
+          return;
+        }
+
+        // Check if employer is verified
+        if (!employerProfile.is_verified) {
+          setError("Your account must be verified before you can request interviews.");
+          setLoading(false);
+          return;
+        }
+
+        setEmployer(employerProfile);
+
+        // Get jobseeker info
+        const jobseekerData = await getJobseekerById(id);
+        if (!jobseekerData) {
+          setError("Candidate not found.");
+          setLoading(false);
+          return;
+        }
+
+        setJobseeker(jobseekerData);
+
+        // Check for existing interview request
+        const existing = await hasExistingInterviewRequest(id);
+        if (existing.exists) {
+          setExistingRequest(true);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError("Failed to load page. Please try again.");
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [id, router]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!employer || !jobseeker) return;
 
-    // Check rate limit before submitting
-    const rateCheck = checkRateLimit("interview_request");
-    if (!rateCheck.allowed) {
-      setRateLimitError(rateCheck.message || "Rate limit exceeded.");
-      return;
+    setSubmitting(true);
+    setError(null);
+
+    const formData = new FormData(event.currentTarget);
+
+    // Build proposed date from date and time inputs
+    let proposedDate: string | undefined;
+    const dateValue = formData.get("proposedDate") as string;
+    const timeValue = formData.get("proposedTime") as string;
+
+    if (dateValue && timeValue) {
+      proposedDate = new Date(`${dateValue}T${timeValue}`).toISOString();
+    } else if (dateValue) {
+      proposedDate = new Date(dateValue).toISOString();
     }
 
-    // Record the action
-    recordAction("interview_request");
+    // Get location based on interview type
+    let location: string | undefined;
+    if (interviewType === "in_person") {
+      location = formData.get("location") as string;
+    } else if (interviewType === "video") {
+      const platform = formData.get("platform") as string;
+      const meetingLink = formData.get("meetingLink") as string;
+      location = meetingLink || platform;
+    }
 
-    // Track for analytics
-    trackEvent("interview_requested", {
-      userRole: "employer",
-      metadata: { interviewType },
-    });
+    const message = formData.get("message") as string;
 
-    setSubmitted(true);
+    try {
+      const result = await createInterviewRequest(id, {
+        proposedDate,
+        proposedLocation: location,
+        interviewType: interviewType as InterviewType,
+        message: message || undefined,
+      });
+
+      if (!result.success) {
+        setError(result.error || "Failed to send interview request");
+        setSubmitting(false);
+        return;
+      }
+
+      // Send email notification to jobseeker
+      if (currentUserId && jobseeker.user_id) {
+        notifyInterviewRequest(
+          jobseeker.user_id,
+          currentUserId,
+          interviewType,
+          proposedDate,
+          message || undefined
+        );
+      }
+
+      // Track for analytics
+      trackEvent("interview_requested", {
+        userRole: "employer",
+        metadata: { interviewType },
+      });
+
+      // Track interview requested (PostHog funnel tracking)
+      trackInterviewRequested();
+
+      setSubmitted(true);
+      setSubmitting(false);
+    } catch (err) {
+      console.error("Error creating interview request:", err);
+      setError("Failed to send interview request. Please try again.");
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <main>
+        <p>Loading...</p>
+      </main>
+    );
+  }
+
+  if (error && !employer) {
+    return (
+      <main>
+        <section>
+          <h1>Request Interview</h1>
+          <div className="card">
+            <div role="alert" className="alert alert-error">
+              {error}
+            </div>
+            <p style={{ marginTop: "var(--space-lg)" }}>
+              <Link href={`/cv/${id}`}>Back to Profile</Link>
+            </p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (existingRequest) {
+    return (
+      <main>
+        <section>
+          <h1>Interview Already Requested</h1>
+          <div className="card">
+            <p>
+              You have already sent an interview request to this candidate.
+              You can view the status of your request in your interviews page.
+            </p>
+            <div style={{ marginTop: "var(--space-lg)", display: "flex", gap: "var(--space-md)", flexWrap: "wrap" }}>
+              <Link href="/employer/interviews" className="btn">
+                View My Interviews
+              </Link>
+              <Link href={`/cv/${id}`} className="btn btn-secondary">
+                Back to Profile
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
   }
 
   if (submitted) {
@@ -57,15 +218,28 @@ export default function RequestInterviewPage() {
       <main>
         <section>
           <h1>Interview Request Sent</h1>
-          <p>
-            Your interview request has been submitted. The candidate will be
-            notified and can respond to your request.
-          </p>
-          <div>
-            <Link href={`/cv/${id}`}>Back to Profile</Link>
+          <div className="card">
+            <p>
+              <strong>Your interview request has been sent to {jobseeker?.full_name}!</strong>
+            </p>
+            <p>
+              The candidate will be notified and can respond to your request.
+              You will be able to see their response in your interviews page.
+            </p>
+            <p className="form-help" style={{ marginTop: "var(--space-md)" }}>
+              Once the candidate accepts, their contact information will be shared with you.
+            </p>
           </div>
-          <div>
-            <Link href="/employer/dashboard">Go to Dashboard</Link>
+          <div style={{ marginTop: "var(--space-lg)", display: "flex", gap: "var(--space-md)", flexWrap: "wrap" }}>
+            <Link href="/employer/interviews" className="btn">
+              View My Interviews
+            </Link>
+            <Link href={`/cv/${id}`} className="btn btn-secondary">
+              Back to Profile
+            </Link>
+            <Link href="/employer/dashboard" className="btn btn-secondary">
+              Go to Dashboard
+            </Link>
           </div>
         </section>
       </main>
@@ -76,41 +250,47 @@ export default function RequestInterviewPage() {
     <main>
       <section>
         <h1>Request Interview</h1>
+
+        {jobseeker && (
+          <div className="card" style={{ marginBottom: "var(--space-lg)" }}>
+            <p style={{ margin: 0 }}>
+              <strong>Requesting interview with:</strong> {jobseeker.full_name}
+            </p>
+            {jobseeker.preferred_role && (
+              <p className="form-help" style={{ margin: "var(--space-xs) 0 0 0" }}>
+                {jobseeker.preferred_role}
+                {jobseeker.city && ` - ${jobseeker.city}`}
+              </p>
+            )}
+          </div>
+        )}
+
         <p>
           Send an interview request to this candidate. Select the interview type
           and provide the necessary details.
         </p>
 
-        {rateLimitStatus && (
-          <p>
-            <small>
-              Interview requests: {rateLimitStatus.remaining} of{" "}
-              {rateLimitStatus.limit} remaining this hour
-            </small>
-          </p>
-        )}
-
-        {rateLimitError && (
-          <p role="alert">
-            <strong>{rateLimitError}</strong>
-          </p>
+        {error && (
+          <div role="alert" className="alert alert-error">
+            {error}
+          </div>
         )}
 
         <form onSubmit={handleSubmit}>
           <fieldset>
-            <legend>Interview Type</legend>
+            <legend>Interview Type *</legend>
 
             <div>
               <label>
                 <input
                   type="radio"
                   name="interviewType"
-                  value="virtual"
-                  checked={interviewType === "virtual"}
-                  onChange={() => setInterviewType("virtual")}
+                  value="video"
+                  checked={interviewType === "video"}
+                  onChange={() => setInterviewType("video")}
                   required
                 />
-                Virtual
+                Video Call
               </label>
             </div>
 
@@ -119,28 +299,42 @@ export default function RequestInterviewPage() {
                 <input
                   type="radio"
                   name="interviewType"
-                  value="physical"
-                  checked={interviewType === "physical"}
-                  onChange={() => setInterviewType("physical")}
+                  value="in_person"
+                  checked={interviewType === "in_person"}
+                  onChange={() => setInterviewType("in_person")}
                   required
                 />
-                Physical
+                In-Person
+              </label>
+            </div>
+
+            <div>
+              <label>
+                <input
+                  type="radio"
+                  name="interviewType"
+                  value="phone"
+                  checked={interviewType === "phone"}
+                  onChange={() => setInterviewType("phone")}
+                  required
+                />
+                Phone Call
               </label>
             </div>
           </fieldset>
 
-          {interviewType === "virtual" && (
+          {interviewType === "video" && (
             <fieldset>
-              <legend>Virtual Interview Details</legend>
+              <legend>Video Call Details</legend>
 
               <div>
-                <label htmlFor="platform">Platform</label>
+                <label htmlFor="platform">Platform *</label>
                 <select id="platform" name="platform" required>
                   <option value="">Select platform</option>
-                  <option value="zoom">Zoom</option>
-                  <option value="google-meet">Google Meet</option>
-                  <option value="microsoft-teams">Microsoft Teams</option>
-                  <option value="other">Other</option>
+                  <option value="Zoom">Zoom</option>
+                  <option value="Google Meet">Google Meet</option>
+                  <option value="Microsoft Teams">Microsoft Teams</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
 
@@ -152,38 +346,35 @@ export default function RequestInterviewPage() {
                   name="meetingLink"
                   placeholder="https://zoom.us/j/..."
                 />
+                <p className="form-help">
+                  You can provide the meeting link now or send it later via message.
+                </p>
               </div>
 
               <div>
-                <label htmlFor="virtualNote">
-                  Additional Notes (optional)
-                </label>
-                <textarea
-                  id="virtualNote"
-                  name="virtualNote"
-                  rows={3}
-                  placeholder="Any additional instructions for joining the call"
+                <label htmlFor="proposedDate">Proposed Date *</label>
+                <input
+                  type="date"
+                  id="proposedDate"
+                  name="proposedDate"
+                  min={new Date().toISOString().split("T")[0]}
+                  required
                 />
               </div>
 
               <div>
-                <label htmlFor="virtualDate">Proposed Date</label>
-                <input type="date" id="virtualDate" name="virtualDate" required />
-              </div>
-
-              <div>
-                <label htmlFor="virtualTime">Proposed Time</label>
-                <input type="time" id="virtualTime" name="virtualTime" required />
+                <label htmlFor="proposedTime">Proposed Time *</label>
+                <input type="time" id="proposedTime" name="proposedTime" required />
               </div>
             </fieldset>
           )}
 
-          {interviewType === "physical" && (
+          {interviewType === "in_person" && (
             <fieldset>
-              <legend>Physical Interview Details</legend>
+              <legend>In-Person Interview Details</legend>
 
               <div>
-                <label htmlFor="location">Location</label>
+                <label htmlFor="location">Location / Address *</label>
                 <input
                   type="text"
                   id="location"
@@ -194,54 +385,87 @@ export default function RequestInterviewPage() {
               </div>
 
               <div>
-                <label htmlFor="physicalDate">Date</label>
+                <label htmlFor="proposedDate">Date *</label>
                 <input
                   type="date"
-                  id="physicalDate"
-                  name="physicalDate"
+                  id="proposedDate"
+                  name="proposedDate"
+                  min={new Date().toISOString().split("T")[0]}
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="physicalTime">Time</label>
+                <label htmlFor="proposedTime">Time *</label>
+                <input type="time" id="proposedTime" name="proposedTime" required />
+              </div>
+            </fieldset>
+          )}
+
+          {interviewType === "phone" && (
+            <fieldset>
+              <legend>Phone Call Details</legend>
+
+              <div>
+                <label htmlFor="proposedDate">Proposed Date *</label>
                 <input
-                  type="time"
-                  id="physicalTime"
-                  name="physicalTime"
+                  type="date"
+                  id="proposedDate"
+                  name="proposedDate"
+                  min={new Date().toISOString().split("T")[0]}
                   required
                 />
               </div>
+
+              <div>
+                <label htmlFor="proposedTime">Proposed Time *</label>
+                <input type="time" id="proposedTime" name="proposedTime" required />
+              </div>
+
+              <p className="form-help">
+                Your phone number will be shared with the candidate after they accept the interview request.
+              </p>
             </fieldset>
           )}
 
           {interviewType && (
             <fieldset>
-              <legend>Message</legend>
+              <legend>Message to Candidate</legend>
 
               <div>
-                <label htmlFor="message">Message to Candidate (optional)</label>
+                <label htmlFor="message">Message (optional)</label>
                 <textarea
                   id="message"
                   name="message"
                   rows={4}
                   placeholder="Introduce yourself and explain the opportunity..."
                 />
+                <p className="form-help">
+                  A brief introduction helps candidates understand the opportunity better.
+                </p>
               </div>
             </fieldset>
           )}
 
-          <div>
-            <button type="submit" disabled={!interviewType}>
-              Send Interview Request
+          <div style={{ marginTop: "var(--space-lg)" }}>
+            <button type="submit" disabled={!interviewType || submitting}>
+              {submitting ? "Sending..." : "Send Interview Request"}
             </button>
           </div>
 
-          <div>
+          <div style={{ marginTop: "var(--space-md)" }}>
             <Link href={`/cv/${id}`}>Cancel</Link>
           </div>
         </form>
       </section>
+
+      {/* Privacy Notice */}
+      <aside className="privacy-notice">
+        <p>
+          <strong>Privacy:</strong> Your contact information will only be shared with the
+          candidate after they accept your interview request.
+        </p>
+      </aside>
     </main>
   );
 }
