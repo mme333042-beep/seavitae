@@ -122,7 +122,6 @@ export default function JobseekerDashboardPage() {
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingInterviews, setPendingInterviews] = useState(0);
-  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -213,20 +212,12 @@ export default function JobseekerDashboardPage() {
     }
   }
 
-  async function handleDownloadPDF() {
-    if (!jobseeker || downloadingPDF) return;
+  function handleDownloadPDF() {
+    if (!jobseeker) return;
 
     if (isPrintAvailable()) {
-      setDownloadingPDF(true);
-      try {
-        const cvData = buildCVData(jobseeker, sections);
-        await downloadCVAsPDF(cvData);
-      } catch (err) {
-        console.error("PDF download error:", err);
-        alert("Failed to download PDF. Please try again.");
-      } finally {
-        setDownloadingPDF(false);
-      }
+      const cvData = buildCVData(jobseeker, sections);
+      downloadCVAsPDF(cvData);
     } else {
       alert("PDF download is not available in this browser.");
     }
@@ -323,9 +314,8 @@ export default function JobseekerDashboardPage() {
               type="button"
               className="pdf-download-btn"
               onClick={handleDownloadPDF}
-              disabled={downloadingPDF}
             >
-              {downloadingPDF ? "Downloading..." : "Download CV (PDF)"}
+              Download CV (PDF)
             </button>
           </div>
         </div>

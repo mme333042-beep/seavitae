@@ -1,6 +1,6 @@
 /**
  * PDF Generator for CV Downloads
- * Uses html2pdf.js for direct PDF download to user's device
+ * Uses browser print functionality for clean, professional PDF output
  */
 
 export interface CVData {
@@ -326,184 +326,31 @@ export function generatePrintableCV(cv: CVData): string {
 }
 
 /**
- * Download CV as PDF directly to user's device
+ * Download CV as PDF using browser print
  */
-export async function downloadCVAsPDF(cv: CVData): Promise<void> {
-  const htmlContent = generatePrintableCV(cv);
-  const filename = generateCVFilename(cv.fullName);
+export function downloadCVAsPDF(cv: CVData): void {
+  const printContent = generatePrintableCV(cv);
+  const printWindow = window.open("", "_blank");
 
-  // Extract styles from the HTML
-  const styleMatch = htmlContent.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-  const styles = styleMatch ? styleMatch[1] : "";
-
-  // Extract body content from the HTML
-  const bodyMatch = htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-  const bodyContent = bodyMatch ? bodyMatch[1] : "";
-
-  // Create a hidden container for PDF generation
-  const container = document.createElement("div");
-  container.id = "cv-pdf-container";
-  container.style.position = "absolute";
-  container.style.left = "-9999px";
-  container.style.top = "0";
-
-  // Add scoped style element
-  const styleElement = document.createElement("style");
-  styleElement.textContent = `
-    #cv-pdf-container .cv-content * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    #cv-pdf-container .cv-content {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 11pt;
-      line-height: 1.5;
-      color: #171717;
-      background: white;
-      padding: 40px 50px;
-      max-width: 800px;
-    }
-    #cv-pdf-container .cv-content h1 {
-      font-size: 24pt;
-      color: #000435;
-      margin-bottom: 4px;
-      font-weight: 600;
-    }
-    #cv-pdf-container .cv-content h2 {
-      font-size: 12pt;
-      color: #000435;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      border-bottom: 2px solid #31439B;
-      padding-bottom: 4px;
-      margin-top: 20px;
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-    #cv-pdf-container .cv-content h3 {
-      font-size: 11pt;
-      color: #000435;
-      margin-bottom: 2px;
-      font-weight: 600;
-    }
-    #cv-pdf-container .cv-content .header {
-      margin-bottom: 20px;
-    }
-    #cv-pdf-container .cv-content .header-meta {
-      color: #666;
-      font-size: 10pt;
-      margin-bottom: 4px;
-    }
-    #cv-pdf-container .cv-content .header-role {
-      font-size: 13pt;
-      color: #31439B;
-      font-weight: 500;
-    }
-    #cv-pdf-container .cv-content .section {
-      margin-bottom: 16px;
-    }
-    #cv-pdf-container .cv-content .entry {
-      margin-bottom: 12px;
-    }
-    #cv-pdf-container .cv-content .entry-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      flex-wrap: wrap;
-    }
-    #cv-pdf-container .cv-content .entry-meta {
-      color: #666;
-      font-size: 10pt;
-    }
-    #cv-pdf-container .cv-content .entry-description {
-      margin-top: 4px;
-      color: #333;
-    }
-    #cv-pdf-container .cv-content .skills-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      list-style: none;
-    }
-    #cv-pdf-container .cv-content .skill-tag {
-      background: #f0f0f0;
-      padding: 2px 10px;
-      border-radius: 3px;
-      font-size: 10pt;
-    }
-    #cv-pdf-container .cv-content .languages-list,
-    #cv-pdf-container .cv-content .certifications-list {
-      list-style: none;
-    }
-    #cv-pdf-container .cv-content .languages-list li,
-    #cv-pdf-container .cv-content .certifications-list li {
-      margin-bottom: 4px;
-    }
-    #cv-pdf-container .cv-content .footer {
-      margin-top: 30px;
-      padding-top: 12px;
-      border-top: 1px solid #e0e0e0;
-      text-align: center;
-      color: #888;
-      font-size: 9pt;
-    }
-    #cv-pdf-container .cv-content .summary {
-      color: #333;
-      line-height: 1.6;
-    }
-    #cv-pdf-container .cv-content a {
-      color: #31439B;
-      text-decoration: none;
-    }
-  `;
-  document.head.appendChild(styleElement);
-
-  // Create content wrapper with the CV content
-  const contentWrapper = document.createElement("div");
-  contentWrapper.className = "cv-content";
-  contentWrapper.innerHTML = bodyContent;
-  container.appendChild(contentWrapper);
-
-  // Append to document body so styles are applied
-  document.body.appendChild(container);
-
-  // Configure html2pdf options for high-quality output
-  const options = {
-    margin: [10, 10, 10, 10] as [number, number, number, number],
-    filename: filename,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      letterRendering: true,
-    },
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait" as const,
-    },
-    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-  };
-
-  try {
-    // Dynamically import html2pdf.js to avoid SSR issues
-    const html2pdf = (await import("html2pdf.js")).default;
-    // Generate and download PDF directly
-    await html2pdf().set(options).from(contentWrapper).save();
-  } catch (error) {
-    console.error("PDF generation error:", error);
-    alert("Failed to generate PDF. Please try again.");
-  } finally {
-    // Clean up: remove container and style element
-    document.body.removeChild(container);
-    document.head.removeChild(styleElement);
+  if (!printWindow) {
+    alert("Please allow popups to download your CV as PDF.");
+    return;
   }
+
+  printWindow.document.write(printContent);
+  printWindow.document.close();
+
+  // Wait for content to load then trigger print
+  printWindow.onload = () => {
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+  };
 }
 
 /**
- * Check if PDF download is available
+ * Check if print is available
  */
 export function isPrintAvailable(): boolean {
-  return typeof window !== "undefined" && typeof document !== "undefined";
+  return typeof window !== "undefined" && typeof window.print === "function";
 }
