@@ -1,12 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useState, Suspense } from "react";
 import Link from "next/link";
 import { signIn } from "@/lib/supabase/auth";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason");
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +66,12 @@ export default function LoginPage() {
       </header>
 
       <section>
+        {reason === "inactivity" && (
+          <div role="alert" className="alert alert-info" style={{ maxWidth: "var(--max-width-narrow)", marginBottom: "var(--space-md)" }}>
+            You were logged out due to inactivity. Please log in again.
+          </div>
+        )}
+
         <div className="card" style={{ maxWidth: "var(--max-width-narrow)" }}>
           {errors.general && (
             <div role="alert" className="alert alert-error">
@@ -104,5 +112,13 @@ export default function LoginPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<main><p>Loading...</p></main>}>
+      <LoginForm />
+    </Suspense>
   );
 }

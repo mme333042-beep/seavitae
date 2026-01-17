@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "@/lib/supabase/auth";
 import { getAdminUser } from "@/lib/supabase/admin";
+import { InactivityTracker } from "@/components/InactivityTracker";
 
 export default function AdminLayout({
   children,
@@ -57,7 +58,7 @@ export default function AdminLayout({
   }
 
   return (
-    <>
+    <InactivityTracker>
       <header className="admin-header">
         <nav>
           <div className="admin-brand">
@@ -142,6 +143,6 @@ export default function AdminLayout({
           color: var(--sv-navy);
         }
       `}</style>
-    </>
+    </InactivityTracker>
   );
 }

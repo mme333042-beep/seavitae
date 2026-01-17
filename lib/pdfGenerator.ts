@@ -1,6 +1,6 @@
 /**
  * PDF Generator for CV Downloads
- * Uses browser print functionality for clean, professional PDF output
+ * Uses html2pdf.js for direct PDF download to user's device
  */
 
 export interface CVData {
@@ -326,31 +326,63 @@ export function generatePrintableCV(cv: CVData): string {
 }
 
 /**
- * Download CV as PDF using browser print
+ * Download CV as PDF directly to user's device
  */
-export function downloadCVAsPDF(cv: CVData): void {
-  const printContent = generatePrintableCV(cv);
-  const printWindow = window.open("", "_blank");
+export async function downloadCVAsPDF(cv: CVData): Promise<void> {
+  const htmlContent = generatePrintableCV(cv);
+  const filename = generateCVFilename(cv.fullName);
 
-  if (!printWindow) {
-    alert("Please allow popups to download your CV as PDF.");
-    return;
+  // Create a temporary container for the HTML content
+  const container = document.createElement("div");
+  container.innerHTML = htmlContent;
+
+  // Extract the body content from the HTML (remove doctype, html, head tags)
+  const bodyMatch = htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  if (bodyMatch) {
+    container.innerHTML = bodyMatch[1];
   }
 
-  printWindow.document.write(printContent);
-  printWindow.document.close();
+  // Apply styles directly to container for PDF generation
+  container.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+  container.style.fontSize = "11pt";
+  container.style.lineHeight = "1.5";
+  container.style.color = "#171717";
+  container.style.background = "white";
+  container.style.padding = "40px 50px";
+  container.style.maxWidth = "800px";
 
-  // Wait for content to load then trigger print
-  printWindow.onload = () => {
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+  // Configure html2pdf options for high-quality output
+  const options = {
+    margin: [10, 10, 10, 10] as [number, number, number, number],
+    filename: filename,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      letterRendering: true,
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait" as const,
+    },
+    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
   };
+
+  try {
+    // Dynamically import html2pdf.js to avoid SSR issues
+    const html2pdf = (await import("html2pdf.js")).default;
+    // Generate and download PDF directly
+    await html2pdf().set(options).from(container).save();
+  } catch (error) {
+    console.error("PDF generation error:", error);
+    alert("Failed to generate PDF. Please try again.");
+  }
 }
 
 /**
- * Check if print is available
+ * Check if PDF download is available
  */
 export function isPrintAvailable(): boolean {
-  return typeof window !== "undefined" && typeof window.print === "function";
+  return typeof window !== "undefined" && typeof document !== "undefined";
 }

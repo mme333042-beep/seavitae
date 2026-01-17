@@ -335,6 +335,27 @@ export async function signOut(): Promise<{ success: boolean; error?: string }> {
       }
     }
 
+    // Clear all cached session data from browser storage
+    if (typeof window !== 'undefined') {
+      // Clear sessionStorage items
+      sessionStorage.removeItem('seavitae_session')
+      sessionStorage.removeItem('seavitae_cv_state')
+      sessionStorage.removeItem('seavitae_saved_cvs')
+
+      // Clear any localStorage auth-related items
+      localStorage.removeItem('seavitae_last_activity')
+
+      // Clear all Supabase-related items from localStorage
+      const keysToRemove: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+          keysToRemove.push(key)
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+    }
+
     return { success: true }
   } catch (err) {
     console.error('[Auth] Unexpected sign out error:', err)
