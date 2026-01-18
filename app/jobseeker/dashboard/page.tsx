@@ -153,7 +153,8 @@ export default function JobseekerDashboardPage() {
         if (cvData && cvData.cv) {
           setCV(cvData.cv);
           setSections(cvData.sections);
-          setEditLocked(cvData.cv.is_locked);
+          // Edit is locked when jobseeker is visible to employers
+          setEditLocked(profile.is_visible);
         }
 
         // Fetch notification counts

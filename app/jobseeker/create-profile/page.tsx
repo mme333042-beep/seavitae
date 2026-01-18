@@ -144,8 +144,8 @@ export default function CreateProfilePage() {
           if (cvData && cvData.cv) {
             setExistingCVId(cvData.cv.id);
 
-            // Check if CV is locked
-            if (cvData.cv.is_locked) {
+            // Check if editing is locked (when jobseeker is visible to employers)
+            if (profile.is_visible) {
               setError("Your CV is locked while visible to employers. Turn off visibility from your dashboard to edit.");
             }
 

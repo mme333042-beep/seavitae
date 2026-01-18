@@ -262,19 +262,26 @@ export async function updateCVSection(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = getSupabaseClient()
 
-  // Check if CV is locked
+  // Check if jobseeker is visible (CV editing is locked when visible)
   const { data: cv, error: cvError } = await supabase
     .from('cvs')
-    .select('is_locked')
+    .select('jobseeker_id')
     .eq('id', cvId)
     .single()
 
   if (cvError) {
-    console.error('[Jobseekers] Failed to check CV lock status:', cvError)
+    console.error('[Jobseekers] Failed to get CV:', cvError)
     return { success: false, error: 'Failed to verify CV status. Please try again.' }
   }
 
-  if (cv?.is_locked) {
+  // Check if jobseeker is visible to employers
+  const { data: jobseeker } = await supabase
+    .from('jobseekers')
+    .select('is_visible')
+    .eq('id', cv.jobseeker_id)
+    .single()
+
+  if (jobseeker?.is_visible) {
     return {
       success: false,
       error: 'Your CV is locked while visible to employers. Turn off visibility from your dashboard to edit.',
@@ -346,17 +353,27 @@ export async function deleteCVSection(
   return { success: true }
 }
 
-// Check if CV is editable (not locked)
+// Check if CV is editable (jobseeker not visible to employers)
 export async function isCVEditable(cvId: string): Promise<boolean> {
   const supabase = getSupabaseClient()
 
-  const { data } = await supabase
+  // Get CV's jobseeker_id
+  const { data: cv } = await supabase
     .from('cvs')
-    .select('is_locked')
+    .select('jobseeker_id')
     .eq('id', cvId)
     .single()
 
-  return data ? !data.is_locked : false
+  if (!cv) return false
+
+  // Check if jobseeker is visible
+  const { data: jobseeker } = await supabase
+    .from('jobseekers')
+    .select('is_visible')
+    .eq('id', cv.jobseeker_id)
+    .single()
+
+  return jobseeker ? !jobseeker.is_visible : false
 }
 
 // Get profile completeness
