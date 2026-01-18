@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/supabase/auth";
 import { createJobseekerProfile, getMyJobseekerProfile, getMyCV, updateCVSection } from "@/lib/supabase/services/jobseekers";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { CVSectionType } from "@/lib/supabase/types";
+import { enhanceCV, prepareSummaryWithEmail } from "@/lib/cvEnhancer";
 
 interface ExperienceEntry {
   id: string;
@@ -72,6 +73,7 @@ export default function CreateProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
   const [existingJobseekerId, setExistingJobseekerId] = useState<string | null>(null);
   const [existingCVId, setExistingCVId] = useState<string | null>(null);
 
@@ -115,6 +117,7 @@ export default function CreateProfilePage() {
           return;
         }
         setUserId(user.id);
+        setUserEmail(user.email || "");
 
         // Track profile creation started and identify user (PostHog funnel tracking)
         trackProfileCreationStarted();
@@ -291,51 +294,7 @@ export default function CreateProfilePage() {
       let jobseekerId = existingJobseekerId;
       let cvId = existingCVId;
 
-      // Create or update jobseeker profile
-      if (!existingJobseekerId) {
-        const result = await createJobseekerProfile(userId, {
-          full_name: fullName,
-          city,
-          preferred_role: preferredRole,
-          bio,
-          years_experience: yearsExperience,
-          age,
-        });
-
-        if (!result.success) {
-          setError(result.error || "Failed to create profile");
-          setSaving(false);
-          return;
-        }
-
-        jobseekerId = result.jobseeker?.id || null;
-
-        // Get the newly created CV
-        const cvData = await getMyCV();
-        cvId = cvData?.cv?.id || null;
-      } else {
-        // Update existing profile
-        const supabase = getSupabaseClient();
-        await supabase
-          .from("jobseekers")
-          .update({
-            full_name: fullName,
-            city,
-            preferred_role: preferredRole,
-            bio,
-            years_experience: yearsExperience,
-            age,
-          })
-          .eq("id", existingJobseekerId);
-      }
-
-      if (!cvId) {
-        setError("Failed to create CV");
-        setSaving(false);
-        return;
-      }
-
-      // Parse form data into CV sections
+      // Parse form data into CV sections first
       const experienceItems = experiences.map((exp, index) => ({
         id: exp.id,
         title: formData.get(`experienceTitle${exp.id}`) as string || "",
@@ -387,16 +346,82 @@ export default function CreateProfilePage() {
         url: formData.get(`publicationLink${pub.id}`) as string || "",
       })).filter(p => p.title);
 
-      // Save CV sections
+      // Enhance CV data for ATS compatibility before saving
+      const cvDataToEnhance = {
+        fullName,
+        email: userEmail,
+        city,
+        preferredRole,
+        summary: bio,
+        yearsExperience,
+        experiences: experienceItems,
+        educations: educationItems,
+        skills: skillItems,
+        languages: languageItems,
+        certifications: certificationItems,
+        projects: projectItems,
+        publications: publicationItems,
+      };
+
+      const enhancedCV = enhanceCV(cvDataToEnhance);
+
+      // Create or update jobseeker profile with enhanced data
+      if (!existingJobseekerId) {
+        const result = await createJobseekerProfile(userId, {
+          full_name: fullName,
+          city: enhancedCV.city,
+          preferred_role: preferredRole,
+          bio: enhancedCV.summary,
+          years_experience: yearsExperience,
+          age,
+        });
+
+        if (!result.success) {
+          setError(result.error || "Failed to create profile");
+          setSaving(false);
+          return;
+        }
+
+        jobseekerId = result.jobseeker?.id || null;
+
+        // Get the newly created CV
+        const cvData = await getMyCV();
+        cvId = cvData?.cv?.id || null;
+      } else {
+        // Update existing profile with enhanced data
+        const supabase = getSupabaseClient();
+        await supabase
+          .from("jobseekers")
+          .update({
+            full_name: fullName,
+            city: enhancedCV.city,
+            preferred_role: preferredRole,
+            bio: enhancedCV.summary,
+            years_experience: yearsExperience,
+            age,
+          })
+          .eq("id", existingJobseekerId);
+      }
+
+      if (!cvId) {
+        setError("Failed to create CV");
+        setSaving(false);
+        return;
+      }
+
+      // Prepare summary with email contact info for CV display
+      const summaryWithEmail = prepareSummaryWithEmail(enhancedCV.summary, userEmail);
+
+      // Save CV sections with enhanced data
       const sectionsToSave: { type: CVSectionType; content: { items: unknown[] } | { text: string } }[] = [
-        { type: "summary", content: { text: bio } },
-        { type: "experience", content: { items: experienceItems } },
-        { type: "education", content: { items: educationItems } },
-        { type: "skills", content: { items: skillItems } },
-        { type: "languages", content: { items: languageItems } },
-        { type: "certifications", content: { items: certificationItems } },
-        { type: "projects", content: { items: projectItems } },
-        { type: "publications", content: { items: publicationItems } },
+        { type: "summary", content: { text: summaryWithEmail } },
+        { type: "experience", content: { items: enhancedCV.experiences } },
+        { type: "education", content: { items: enhancedCV.educations } },
+        { type: "skills", content: { items: enhancedCV.skills } },
+        { type: "languages", content: { items: enhancedCV.languages } },
+        { type: "certifications", content: { items: enhancedCV.certifications } },
+        { type: "projects", content: { items: enhancedCV.projects } },
+        { type: "publications", content: { items: enhancedCV.publications } },
       ];
 
       for (const section of sectionsToSave) {
