@@ -175,7 +175,7 @@ const ATS_LIMITS = {
   SUMMARY_MIN_WORDS: 60,
   SUMMARY_MAX_LINES: 5,
   EXPERIENCE_MAX_BULLETS: 4,
-  BULLET_MAX_WORDS: 25, // ~1 line
+  BULLET_MAX_WORDS: 20, // ≤20 words per bullet as required
   SKILL_MAX_WORDS: 2,
   MAX_SKILLS_TO_ADD: 3, // Prevent content expansion
   MAX_KEYWORDS_TO_ADD: 2, // Prevent keyword stuffing
@@ -606,13 +606,18 @@ function getTechnicalSkillsForRole(role: string): string[] {
 // ============================================================================
 
 /**
- * Enhances the professional summary
- * - Max 60-80 words, 4-5 lines
- * - Removes personal statements and filler
- * - Focuses on role, experience, and strengths
- * - Light keyword alignment (no stuffing)
+ * Enhances the professional summary (MANDATORY REWRITE)
  *
- * SAFETY: Always returns at least the original summary if enhancement fails
+ * SeaVitae Philosophy: This is NOT optional enhancement.
+ * The summary MUST be rewritten to be cleaner, clearer, more ATS-readable.
+ *
+ * Rules:
+ * - Max 80 words
+ * - Remove: "I am looking for...", "I need an opportunity...", "Open to learning..."
+ * - Rewrite into: Who they are, What they do, What value they bring
+ * - Preserve user's original meaning
+ *
+ * FALLBACK: Only if enhanced result is literally empty ("")
  */
 export function enhanceSummary(
   summary: string,
@@ -620,54 +625,42 @@ export function enhanceSummary(
   yearsExperience: number,
   email: string
 ): string {
-  // SAFETY: Return original if input is empty
+  // If input is empty, nothing to enhance
   if (!summary || summary.trim().length === 0) {
-    return summary;
+    return summary || '';
   }
 
-  const originalSummary = summary.trim(); // Keep original for fallback
+  const originalSummary = summary.trim();
   let enhanced = summary;
 
-  // 1. Remove weak phrases
+  // 1. Remove weak/desperate phrases - MANDATORY
   for (const { pattern, replacement } of WEAK_PHRASES) {
     enhanced = enhanced.replace(pattern, replacement);
   }
 
-  // 2. Remove personal filler statements
+  // 2. Remove personal filler statements - MANDATORY
   enhanced = removePersonalFiller(enhanced);
 
   // 3. Clean up resulting whitespace
   enhanced = enhanced.replace(/\s{2,}/g, ' ').trim();
 
-  // SAFETY CHECK: If we've removed too much, use original
-  if (enhanced.length < originalSummary.length * 0.3) {
-    enhanced = originalSummary;
-  }
-
-  // 4. Remove sentences that became empty or too short (but keep at least something)
+  // 4. Filter very short sentences (likely fragments from removal)
   const sentences = enhanced.split(/(?<=[.!?])\s+/)
-    .filter(sentence => sentence.trim().length > 10);
+    .filter(sentence => sentence.trim().length > 5);
 
   if (sentences.length > 0) {
     enhanced = sentences.join(' ');
   }
-  // If no sentences pass filter, keep enhanced as-is (don't empty it)
 
-  // SAFETY CHECK: Ensure we still have content
-  if (!enhanced || enhanced.trim().length === 0) {
-    enhanced = originalSummary;
-  }
-
-  // 5. Ensure it starts with a strong statement (not "I am looking...")
+  // 5. Transform "I am a..." to professional form
   if (/^I am\s/i.test(enhanced)) {
-    // Transform "I am a software engineer" to "Software engineer with..."
     enhanced = enhanced.replace(/^I am (a |an )?/i, '');
     if (enhanced.length > 0) {
       enhanced = enhanced.charAt(0).toUpperCase() + enhanced.slice(1);
     }
   }
 
-  // 6. Add years of experience if not already mentioned AND if under word limit
+  // 6. Add years of experience if not mentioned and under word limit
   const currentWordCount = countWords(enhanced);
   if (yearsExperience > 0 &&
       currentWordCount < ATS_LIMITS.SUMMARY_MAX_WORDS - 10 &&
@@ -676,20 +669,18 @@ export function enhanceSummary(
       ? '1 year of experience'
       : `${yearsExperience} years of experience`;
 
-    // Insert after first sentence or at the beginning
     const firstPeriod = enhanced.indexOf('.');
     if (firstPeriod > 0 && firstPeriod < 100) {
       enhanced = enhanced.slice(0, firstPeriod + 1) + ` Brings ${experiencePhrase} in the field.` + enhanced.slice(firstPeriod + 1);
     }
   }
 
-  // 7. Light keyword alignment - only add if under word limit (prevent stuffing)
+  // 7. Light keyword alignment (max 2 keywords to prevent stuffing)
   const wordsAfterExp = countWords(enhanced);
   if (wordsAfterExp < ATS_LIMITS.SUMMARY_MAX_WORDS - 15) {
     const keywords = getKeywordsForRole(preferredRole);
     const summaryLower = enhanced.toLowerCase();
 
-    // Only add keywords that aren't already present - limit to MAX_KEYWORDS_TO_ADD
     const missingKeywords = keywords
       .filter(kw => !summaryLower.includes(kw.toLowerCase()))
       .slice(0, ATS_LIMITS.MAX_KEYWORDS_TO_ADD);
@@ -701,14 +692,15 @@ export function enhanceSummary(
     }
   }
 
-  // 8. ENFORCE WORD LIMIT - truncate intelligently if exceeded
+  // 8. Enforce max 80 words
   enhanced = truncateToWordLimit(enhanced, ATS_LIMITS.SUMMARY_MAX_WORDS);
 
   // 9. Final grammar cleanup
   enhanced = cleanupGrammar(enhanced);
 
-  // FINAL SAFETY CHECK: Never return empty if original had content
-  if (!enhanced || enhanced.trim().length === 0) {
+  // FALLBACK: Only if result is literally empty
+  if (enhanced.trim() === '') {
+    console.warn('[CV Enhancement] Summary became empty - using original');
     return originalSummary;
   }
 
@@ -716,39 +708,48 @@ export function enhanceSummary(
 }
 
 /**
- * Enhances experience descriptions
- * - Bullet points ONLY (no paragraphs)
- * - Max 3-4 bullets per role
- * - Each bullet: one sentence, one idea, one line max
- * - Compress long input; never expand
+ * Enhances experience descriptions (MANDATORY CONVERSION TO BULLETS)
  *
- * SAFETY: Always preserves original description if enhancement produces empty
+ * SeaVitae Philosophy: Experience MUST be bullet points, not paragraphs.
+ * User input (sentences, commas, paragraphs) MUST be split and normalized.
+ *
+ * Rules:
+ * - Max 3-4 bullets per role
+ * - Each bullet: ≤20 words, starts with strong verb
+ * - Split sentences, commas, paragraphs into bullets
+ * - Do NOT fallback because of restructuring
+ *
+ * FALLBACK: Only if result is literally empty ([])
  */
 export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem[] {
-  // SAFETY: Return original if input is empty
   if (!experiences || experiences.length === 0) {
-    return experiences;
+    return experiences || [];
   }
 
   return experiences.map(exp => {
-    const originalDescription = exp.description; // Keep for fallback
+    const originalDescription = exp.description;
 
     if (!originalDescription || originalDescription.trim().length === 0) {
       return exp;
     }
 
-    // 1. Split into bullet points - handle various formats
+    // 1. MANDATORY: Split into bullet points from ANY format
+    // Handle: sentences, commas, newlines, bullet chars, semicolons
     let bullets = originalDescription
-      .split(/[\n•\-\*]|(?<=[.!?])\s+(?=[A-Z])/) // Split on bullets, newlines, or sentence boundaries
+      // First normalize common separators
+      .replace(/;/g, '.')
+      .replace(/,\s*(?=[A-Z])/g, '. ') // Comma before capital letter = new sentence
+      // Split on: newlines, bullet chars, sentence endings
+      .split(/[\n•\-\*]|(?<=[.!?])\s+/)
       .map(b => b.trim())
-      .filter(b => b.length > 5); // Filter out very short fragments
+      .filter(b => b.length > 3); // Only filter truly empty
 
-    // SAFETY: If splitting removed everything, use original as single bullet
+    // If nothing split, treat entire text as one bullet
     if (bullets.length === 0) {
       bullets = [originalDescription.trim()];
     }
 
-    // 2. Enhance each bullet point
+    // 2. Enhance each bullet - MANDATORY
     bullets = bullets.map(bullet => {
       let enhanced = bullet;
 
@@ -760,145 +761,136 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
         enhanced = convertToPastTense(enhanced);
       }
 
-      // DO NOT add metrics - this could expand content
-      // enhanced = addInferrableMetrics(enhanced, exp.title);
-
-      // Truncate to one line max (BULLET_MAX_WORDS words)
+      // Truncate to ≤20 words
       enhanced = truncateBullet(enhanced, ATS_LIMITS.BULLET_MAX_WORDS);
 
-      // Clean up grammar
+      // Ensure starts with capital, ends with period
       enhanced = cleanupGrammar(enhanced);
 
       return enhanced;
-    }).filter(b => b && b.trim().length > 0); // Remove any that became empty
+    }).filter(b => b && b.trim().length > 0);
 
-    // 3. ENFORCE MAX BULLETS - keep most relevant (usually first ones)
+    // 3. Enforce max 4 bullets per role
     if (bullets.length > ATS_LIMITS.EXPERIENCE_MAX_BULLETS) {
       bullets = bullets.slice(0, ATS_LIMITS.EXPERIENCE_MAX_BULLETS);
     }
 
-    // SAFETY: If all bullets were filtered, use original description
+    // FALLBACK: Only if literally empty
     if (bullets.length === 0) {
-      console.warn('[CV Enhancement] Experience bullets filtered out - using original');
-      bullets = [originalDescription.trim()];
+      console.warn('[CV Enhancement] Experience description became empty - using original');
+      bullets = [cleanupGrammar(originalDescription.trim())];
     }
 
-    // 4. Rejoin bullets with newlines (bullet point format)
+    // 4. Join bullets with newlines (bullet point format)
     const enhancedDescription = bullets.join('\n');
 
-    // 5. Normalize dates and location (with safety fallbacks)
-    const enhancedLocation = normalizeLocation(exp.location) || exp.location;
-    const enhancedStartDate = normalizeDate(exp.startDate) || exp.startDate;
-    const enhancedEndDate = exp.current ? '' : (normalizeDate(exp.endDate) || exp.endDate);
-
+    // 5. Normalize dates and location
     return {
       ...exp,
-      description: enhancedDescription || originalDescription, // Final fallback
-      location: enhancedLocation,
-      startDate: enhancedStartDate,
-      endDate: enhancedEndDate,
+      description: enhancedDescription,
+      location: normalizeLocation(exp.location) || exp.location,
+      startDate: normalizeDate(exp.startDate) || exp.startDate,
+      endDate: exp.current ? '' : (normalizeDate(exp.endDate) || exp.endDate),
     };
   });
 }
 
 /**
- * Enhances skills list based on role
- * - Max 2 words per skill
- * - No duplicates
- * - No punctuation inside skills
- * - Normalized casing
- * - Remove vague filler skills
- * - Prevent content expansion
+ * Enhances skills list (MANDATORY NORMALIZATION)
  *
- * SAFETY: Always returns at least the original skills if all get filtered
+ * SeaVitae Philosophy: Skills MUST be normalized for ATS readability.
+ * Even soft skills should be normalized, not reverted.
+ *
+ * Rules:
+ * - Max 2 words per skill
+ * - Normalize capitalization
+ * - Remove duplicates
+ * - Remove filler AFTER normalization
+ * - If all skills are soft skills: still normalize, do NOT revert
+ *
+ * FALLBACK: Only if result is literally empty ([])
  */
 export function enhanceSkills(
   skills: SkillItem[],
   preferredRole: string,
   experiences: ExperienceItem[]
 ): SkillItem[] {
-  // SAFETY: Return original if input is empty
   if (!skills || skills.length === 0) {
-    return skills;
+    return skills || [];
   }
 
-  const originalSkills = skills; // Keep for fallback
   const seenSkills = new Set<string>(); // For duplicate detection
-  const validatedSkills: SkillItem[] = [];
-  let removedCount = 0;
+  const normalizedSkills: SkillItem[] = [];
 
-  // 1. Validate and clean existing skills
+  // 1. FIRST PASS: Normalize ALL skills (capitalization, punctuation, word limit)
   for (const skill of skills) {
-    const validated = validateSkill(skill.name);
+    let normalized = skill.name.trim();
 
-    if (validated === null) {
-      // Filler skill removed
-      removedCount++;
+    // Remove punctuation except hyphens and slashes
+    normalized = normalized.replace(/[.,;:!?'"()[\]{}]/g, '');
+
+    // Normalize casing (title case if not an acronym)
+    if (normalized === normalized.toUpperCase() && normalized.length > 4) {
+      normalized = toTitleCase(normalized);
+    } else if (normalized === normalized.toLowerCase()) {
+      normalized = toTitleCase(normalized);
+    }
+
+    // Limit to max 2 words
+    const words = normalized.split(/\s+/).filter(w => w.length > 0);
+    if (words.length > 2) {
+      normalized = words.slice(0, 2).join(' ');
+    }
+
+    // Skip if too short
+    if (normalized.length < 2) {
       continue;
     }
 
-    // Check for duplicates (case-insensitive)
-    const lowerValidated = validated.toLowerCase();
-    if (seenSkills.has(lowerValidated)) {
-      removedCount++;
+    // Skip duplicates (case-insensitive)
+    const lowerNormalized = normalized.toLowerCase();
+    if (seenSkills.has(lowerNormalized)) {
       continue;
     }
 
-    seenSkills.add(lowerValidated);
-    validatedSkills.push({
+    seenSkills.add(lowerNormalized);
+    normalizedSkills.push({
       ...skill,
-      name: validated,
+      name: normalized,
     });
   }
 
-  // SAFETY CHECK: If we filtered out ALL skills, return original
-  // This prevents blank PDF - user's original skills are better than nothing
-  if (validatedSkills.length === 0 && originalSkills.length > 0) {
-    console.warn('[CV Enhancement] All skills were filtered - returning original skills');
-    return originalSkills.map(skill => ({
-      ...skill,
-      name: skill.name.trim(), // At least trim them
+  // 2. SECOND PASS: Remove filler skills from normalized list
+  const finalSkills: SkillItem[] = [];
+  for (const skill of normalizedSkills) {
+    const lowerName = skill.name.toLowerCase();
+    const isFiller = FILLER_SKILLS.some(filler =>
+      lowerName === filler || lowerName.includes(filler)
+    );
+
+    if (!isFiller) {
+      finalSkills.push(skill);
+    }
+  }
+
+  // 3. If filler removal left us empty, use normalized skills (not original)
+  // This ensures skills are ALWAYS normalized
+  if (finalSkills.length === 0 && normalizedSkills.length > 0) {
+    console.warn('[CV Enhancement] All skills were filler - keeping normalized versions');
+    return normalizedSkills; // Return normalized, not original
+  }
+
+  // FALLBACK: Only if literally empty
+  if (finalSkills.length === 0 && skills.length > 0) {
+    console.warn('[CV Enhancement] Skills became empty - using normalized originals');
+    // Return at least normalized versions
+    return skills.map(s => ({
+      ...s,
+      name: toTitleCase(s.name.trim().slice(0, 30)) // Basic normalization
     }));
   }
 
-  // 2. LAYOUT SAFETY: Only add skills if we removed some AND stay under limit
-  const maxToAdd = Math.min(removedCount, ATS_LIMITS.MAX_SKILLS_TO_ADD);
-
-  if (maxToAdd > 0) {
-    // Get suggested skills based on role
-    const suggestedTechnical = getTechnicalSkillsForRole(preferredRole);
-    const experienceText = experiences.map(e => `${e.title} ${e.description}`).join(' ').toLowerCase();
-
-    let addedCount = 0;
-
-    // Add relevant technical skills
-    for (const skill of suggestedTechnical) {
-      if (addedCount >= maxToAdd) break;
-
-      const validated = validateSkill(skill);
-      if (!validated) continue;
-
-      const lowerValidated = validated.toLowerCase();
-      if (seenSkills.has(lowerValidated)) continue;
-
-      // Only add if clearly relevant
-      const isRelevant = experienceText.includes(lowerValidated) ||
-        preferredRole.toLowerCase().includes(lowerValidated.split(' ')[0]);
-
-      if (isRelevant) {
-        seenSkills.add(lowerValidated);
-        validatedSkills.push({
-          id: crypto.randomUUID(),
-          name: validated,
-        });
-        addedCount++;
-      }
-    }
-
-    // DO NOT add universal soft skills - these are usually filler
-  }
-
-  return validatedSkills;
+  return finalSkills;
 }
 
 /**
@@ -973,61 +965,45 @@ export function enhanceCertifications(certifications: CertificationItem[]): Cert
 }
 
 // ============================================================================
-// VALIDATION & SAFETY FUNCTIONS
+// FALLBACK HELPERS (ONLY FOR TRULY EMPTY OUTPUT)
 // ============================================================================
 
 /**
- * Checks if a string is valid (non-empty after trimming)
+ * Checks if a string is literally empty (not just "changed")
  */
-function isValidString(str: string | undefined | null): boolean {
-  return typeof str === 'string' && str.trim().length > 0;
+function isLiterallyEmpty(str: string | undefined | null): boolean {
+  return !str || str.trim() === '';
 }
 
 /**
- * Checks if an array is valid (non-empty with at least one valid item)
+ * Checks if an array is literally empty (not just "changed")
  */
-function isValidArray<T>(arr: T[] | undefined | null): boolean {
-  return Array.isArray(arr) && arr.length > 0;
+function isLiterallyEmptyArray<T>(arr: T[] | undefined | null): boolean {
+  return !arr || arr.length === 0;
 }
 
 /**
- * Safely falls back to original value if enhanced value is invalid
+ * Fallback ONLY if enhanced is literally empty ("")
+ * DO NOT fallback just because content changed
  */
-function safeString(enhanced: string, original: string): string {
-  return isValidString(enhanced) ? enhanced : original;
-}
-
-/**
- * Safely falls back to original array if enhanced array is empty
- */
-function safeArray<T>(enhanced: T[], original: T[]): T[] {
-  return isValidArray(enhanced) ? enhanced : original;
-}
-
-/**
- * Validates that enhanced CV data has all required fields
- * Returns true if data is valid for PDF generation
- */
-function validateEnhancedData(data: EnhancedCVData, original: CVData): boolean {
-  // Summary must not be empty if original had content
-  if (isValidString(original.summary) && !isValidString(data.summary)) {
-    console.warn('[CV Enhancement] Summary became empty - will use original');
-    return false;
+function fallbackIfEmpty(enhanced: string, original: string): string {
+  if (isLiterallyEmpty(enhanced)) {
+    console.warn('[CV Enhancement] Output empty - using original');
+    return original;
   }
+  return enhanced;
+}
 
-  // Skills must not be empty if original had skills
-  if (isValidArray(original.skills) && !isValidArray(data.skills)) {
-    console.warn('[CV Enhancement] Skills became empty - will use original');
-    return false;
+/**
+ * Fallback ONLY if enhanced array is literally empty ([])
+ * DO NOT fallback just because content changed
+ */
+function fallbackIfEmptyArray<T>(enhanced: T[], original: T[]): T[] {
+  if (isLiterallyEmptyArray(enhanced)) {
+    console.warn('[CV Enhancement] Output empty - using original');
+    return original;
   }
-
-  // Experience must not be empty if original had experience
-  if (isValidArray(original.experiences) && !isValidArray(data.experiences)) {
-    console.warn('[CV Enhancement] Experiences became empty - will use original');
-    return false;
-  }
-
-  return true;
+  return enhanced;
 }
 
 // ============================================================================
@@ -1035,17 +1011,20 @@ function validateEnhancedData(data: EnhancedCVData, original: CVData): boolean {
 // ============================================================================
 
 /**
- * Main function to enhance all CV data
- * This is the entry point called during CV save
+ * Main function to enhance all CV data (MANDATORY ENHANCEMENT)
  *
- * SAFETY GUARANTEES:
- * - Summary will NEVER be empty if user provided a summary
- * - Skills array will NEVER be empty if user provided skills
- * - Experience array will NEVER be empty if user provided experience
- * - All fields fall back to original data if enhancement produces empty output
+ * SeaVitae Philosophy:
+ * - Enhancement ALWAYS runs
+ * - DO NOT fallback because content "changed too much"
+ * - DO NOT fallback because content was "restructured"
+ * - Fallback ONLY if output is literally empty ("" or [])
+ *
+ * This ensures CVs come out cleaner, clearer, more ATS-readable than input.
  */
 export function enhanceCV(data: CVData): EnhancedCVData {
-  // 1. Enhance professional summary
+  console.log('[CV Enhancement] Starting enhancement...');
+
+  // 1. Enhance professional summary - MANDATORY REWRITE
   let enhancedSummary: string;
   try {
     enhancedSummary = enhanceSummary(
@@ -1054,32 +1033,29 @@ export function enhanceCV(data: CVData): EnhancedCVData {
       data.yearsExperience,
       data.email
     );
-    // DEFENSIVE: Fall back to original if enhancement produced empty
-    enhancedSummary = safeString(enhancedSummary, data.summary);
+    enhancedSummary = fallbackIfEmpty(enhancedSummary, data.summary);
   } catch (err) {
-    console.error('[CV Enhancement] Summary enhancement failed:', err);
-    enhancedSummary = data.summary; // Use original on error
+    console.error('[CV Enhancement] Summary failed:', err);
+    enhancedSummary = data.summary;
   }
 
-  // 2. Enhance experience descriptions
+  // 2. Enhance experience - MANDATORY BULLET CONVERSION
   let enhancedExperiences: ExperienceItem[];
   try {
     enhancedExperiences = enhanceExperience(data.experiences);
-    // DEFENSIVE: Fall back to original if enhancement produced empty array
-    enhancedExperiences = safeArray(enhancedExperiences, data.experiences);
+    enhancedExperiences = fallbackIfEmptyArray(enhancedExperiences, data.experiences);
   } catch (err) {
-    console.error('[CV Enhancement] Experience enhancement failed:', err);
+    console.error('[CV Enhancement] Experience failed:', err);
     enhancedExperiences = data.experiences;
   }
 
-  // 3. Enhance skills based on role
+  // 3. Enhance skills - MANDATORY NORMALIZATION
   let enhancedSkills: SkillItem[];
   try {
     enhancedSkills = enhanceSkills(data.skills, data.preferredRole, data.experiences);
-    // DEFENSIVE: Fall back to original if enhancement produced empty array
-    enhancedSkills = safeArray(enhancedSkills, data.skills);
+    enhancedSkills = fallbackIfEmptyArray(enhancedSkills, data.skills);
   } catch (err) {
-    console.error('[CV Enhancement] Skills enhancement failed:', err);
+    console.error('[CV Enhancement] Skills failed:', err);
     enhancedSkills = data.skills;
   }
 
@@ -1087,9 +1063,9 @@ export function enhanceCV(data: CVData): EnhancedCVData {
   let enhancedEducations: EducationItem[];
   try {
     enhancedEducations = enhanceEducation(data.educations);
-    enhancedEducations = safeArray(enhancedEducations, data.educations);
+    enhancedEducations = fallbackIfEmptyArray(enhancedEducations, data.educations);
   } catch (err) {
-    console.error('[CV Enhancement] Education enhancement failed:', err);
+    console.error('[CV Enhancement] Education failed:', err);
     enhancedEducations = data.educations;
   }
 
@@ -1097,9 +1073,9 @@ export function enhanceCV(data: CVData): EnhancedCVData {
   let enhancedProjects: ProjectItem[];
   try {
     enhancedProjects = enhanceProjects(data.projects);
-    enhancedProjects = safeArray(enhancedProjects, data.projects);
+    enhancedProjects = fallbackIfEmptyArray(enhancedProjects, data.projects);
   } catch (err) {
-    console.error('[CV Enhancement] Projects enhancement failed:', err);
+    console.error('[CV Enhancement] Projects failed:', err);
     enhancedProjects = data.projects;
   }
 
@@ -1107,9 +1083,9 @@ export function enhanceCV(data: CVData): EnhancedCVData {
   let enhancedLanguages: LanguageItem[];
   try {
     enhancedLanguages = enhanceLanguages(data.languages);
-    enhancedLanguages = safeArray(enhancedLanguages, data.languages);
+    enhancedLanguages = fallbackIfEmptyArray(enhancedLanguages, data.languages);
   } catch (err) {
-    console.error('[CV Enhancement] Languages enhancement failed:', err);
+    console.error('[CV Enhancement] Languages failed:', err);
     enhancedLanguages = data.languages;
   }
 
@@ -1117,23 +1093,25 @@ export function enhanceCV(data: CVData): EnhancedCVData {
   let enhancedCertifications: CertificationItem[];
   try {
     enhancedCertifications = enhanceCertifications(data.certifications);
-    enhancedCertifications = safeArray(enhancedCertifications, data.certifications);
+    enhancedCertifications = fallbackIfEmptyArray(enhancedCertifications, data.certifications);
   } catch (err) {
-    console.error('[CV Enhancement] Certifications enhancement failed:', err);
+    console.error('[CV Enhancement] Certifications failed:', err);
     enhancedCertifications = data.certifications;
   }
 
-  // 8. Normalize city location
+  // 8. Normalize city
   let enhancedCity: string;
   try {
     enhancedCity = normalizeLocation(data.city);
-    enhancedCity = safeString(enhancedCity, data.city);
+    enhancedCity = fallbackIfEmpty(enhancedCity, data.city);
   } catch (err) {
-    console.error('[CV Enhancement] City normalization failed:', err);
+    console.error('[CV Enhancement] City failed:', err);
     enhancedCity = data.city;
   }
 
-  const result: EnhancedCVData = {
+  console.log('[CV Enhancement] Enhancement complete');
+
+  return {
     ...data,
     city: enhancedCity,
     summary: enhancedSummary,
@@ -1146,11 +1124,6 @@ export function enhanceCV(data: CVData): EnhancedCVData {
     _enhanced: true,
     _enhancementTimestamp: new Date().toISOString(),
   };
-
-  // Final validation - log warning if any data was lost
-  validateEnhancedData(result, data);
-
-  return result;
 }
 
 /**
