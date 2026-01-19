@@ -611,6 +611,8 @@ function getTechnicalSkillsForRole(role: string): string[] {
  * - Removes personal statements and filler
  * - Focuses on role, experience, and strengths
  * - Light keyword alignment (no stuffing)
+ *
+ * SAFETY: Always returns at least the original summary if enhancement fails
  */
 export function enhanceSummary(
   summary: string,
@@ -618,10 +620,12 @@ export function enhanceSummary(
   yearsExperience: number,
   email: string
 ): string {
+  // SAFETY: Return original if input is empty
   if (!summary || summary.trim().length === 0) {
     return summary;
   }
 
+  const originalSummary = summary.trim(); // Keep original for fallback
   let enhanced = summary;
 
   // 1. Remove weak phrases
@@ -635,16 +639,32 @@ export function enhanceSummary(
   // 3. Clean up resulting whitespace
   enhanced = enhanced.replace(/\s{2,}/g, ' ').trim();
 
-  // 4. Remove sentences that became empty or too short
-  enhanced = enhanced.split(/(?<=[.!?])\s+/)
-    .filter(sentence => sentence.trim().length > 10)
-    .join(' ');
+  // SAFETY CHECK: If we've removed too much, use original
+  if (enhanced.length < originalSummary.length * 0.3) {
+    enhanced = originalSummary;
+  }
+
+  // 4. Remove sentences that became empty or too short (but keep at least something)
+  const sentences = enhanced.split(/(?<=[.!?])\s+/)
+    .filter(sentence => sentence.trim().length > 10);
+
+  if (sentences.length > 0) {
+    enhanced = sentences.join(' ');
+  }
+  // If no sentences pass filter, keep enhanced as-is (don't empty it)
+
+  // SAFETY CHECK: Ensure we still have content
+  if (!enhanced || enhanced.trim().length === 0) {
+    enhanced = originalSummary;
+  }
 
   // 5. Ensure it starts with a strong statement (not "I am looking...")
   if (/^I am\s/i.test(enhanced)) {
     // Transform "I am a software engineer" to "Software engineer with..."
     enhanced = enhanced.replace(/^I am (a |an )?/i, '');
-    enhanced = enhanced.charAt(0).toUpperCase() + enhanced.slice(1);
+    if (enhanced.length > 0) {
+      enhanced = enhanced.charAt(0).toUpperCase() + enhanced.slice(1);
+    }
   }
 
   // 6. Add years of experience if not already mentioned AND if under word limit
@@ -687,6 +707,11 @@ export function enhanceSummary(
   // 9. Final grammar cleanup
   enhanced = cleanupGrammar(enhanced);
 
+  // FINAL SAFETY CHECK: Never return empty if original had content
+  if (!enhanced || enhanced.trim().length === 0) {
+    return originalSummary;
+  }
+
   return enhanced;
 }
 
@@ -696,20 +721,32 @@ export function enhanceSummary(
  * - Max 3-4 bullets per role
  * - Each bullet: one sentence, one idea, one line max
  * - Compress long input; never expand
+ *
+ * SAFETY: Always preserves original description if enhancement produces empty
  */
 export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem[] {
-  return experiences.map(exp => {
-    let description = exp.description;
+  // SAFETY: Return original if input is empty
+  if (!experiences || experiences.length === 0) {
+    return experiences;
+  }
 
-    if (!description || description.trim().length === 0) {
+  return experiences.map(exp => {
+    const originalDescription = exp.description; // Keep for fallback
+
+    if (!originalDescription || originalDescription.trim().length === 0) {
       return exp;
     }
 
     // 1. Split into bullet points - handle various formats
-    let bullets = description
+    let bullets = originalDescription
       .split(/[\n•\-\*]|(?<=[.!?])\s+(?=[A-Z])/) // Split on bullets, newlines, or sentence boundaries
       .map(b => b.trim())
       .filter(b => b.length > 5); // Filter out very short fragments
+
+    // SAFETY: If splitting removed everything, use original as single bullet
+    if (bullets.length === 0) {
+      bullets = [originalDescription.trim()];
+    }
 
     // 2. Enhance each bullet point
     bullets = bullets.map(bullet => {
@@ -733,23 +770,33 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
       enhanced = cleanupGrammar(enhanced);
 
       return enhanced;
-    });
+    }).filter(b => b && b.trim().length > 0); // Remove any that became empty
 
     // 3. ENFORCE MAX BULLETS - keep most relevant (usually first ones)
     if (bullets.length > ATS_LIMITS.EXPERIENCE_MAX_BULLETS) {
       bullets = bullets.slice(0, ATS_LIMITS.EXPERIENCE_MAX_BULLETS);
     }
 
+    // SAFETY: If all bullets were filtered, use original description
+    if (bullets.length === 0) {
+      console.warn('[CV Enhancement] Experience bullets filtered out - using original');
+      bullets = [originalDescription.trim()];
+    }
+
     // 4. Rejoin bullets with newlines (bullet point format)
     const enhancedDescription = bullets.join('\n');
 
-    // 5. Normalize dates and location
+    // 5. Normalize dates and location (with safety fallbacks)
+    const enhancedLocation = normalizeLocation(exp.location) || exp.location;
+    const enhancedStartDate = normalizeDate(exp.startDate) || exp.startDate;
+    const enhancedEndDate = exp.current ? '' : (normalizeDate(exp.endDate) || exp.endDate);
+
     return {
       ...exp,
-      description: enhancedDescription,
-      location: normalizeLocation(exp.location),
-      startDate: normalizeDate(exp.startDate),
-      endDate: exp.current ? '' : normalizeDate(exp.endDate),
+      description: enhancedDescription || originalDescription, // Final fallback
+      location: enhancedLocation,
+      startDate: enhancedStartDate,
+      endDate: enhancedEndDate,
     };
   });
 }
@@ -762,12 +809,20 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
  * - Normalized casing
  * - Remove vague filler skills
  * - Prevent content expansion
+ *
+ * SAFETY: Always returns at least the original skills if all get filtered
  */
 export function enhanceSkills(
   skills: SkillItem[],
   preferredRole: string,
   experiences: ExperienceItem[]
 ): SkillItem[] {
+  // SAFETY: Return original if input is empty
+  if (!skills || skills.length === 0) {
+    return skills;
+  }
+
+  const originalSkills = skills; // Keep for fallback
   const seenSkills = new Set<string>(); // For duplicate detection
   const validatedSkills: SkillItem[] = [];
   let removedCount = 0;
@@ -794,6 +849,16 @@ export function enhanceSkills(
       ...skill,
       name: validated,
     });
+  }
+
+  // SAFETY CHECK: If we filtered out ALL skills, return original
+  // This prevents blank PDF - user's original skills are better than nothing
+  if (validatedSkills.length === 0 && originalSkills.length > 0) {
+    console.warn('[CV Enhancement] All skills were filtered - returning original skills');
+    return originalSkills.map(skill => ({
+      ...skill,
+      name: skill.name.trim(), // At least trim them
+    }));
   }
 
   // 2. LAYOUT SAFETY: Only add skills if we removed some AND stay under limit
@@ -908,44 +973,167 @@ export function enhanceCertifications(certifications: CertificationItem[]): Cert
 }
 
 // ============================================================================
+// VALIDATION & SAFETY FUNCTIONS
+// ============================================================================
+
+/**
+ * Checks if a string is valid (non-empty after trimming)
+ */
+function isValidString(str: string | undefined | null): boolean {
+  return typeof str === 'string' && str.trim().length > 0;
+}
+
+/**
+ * Checks if an array is valid (non-empty with at least one valid item)
+ */
+function isValidArray<T>(arr: T[] | undefined | null): boolean {
+  return Array.isArray(arr) && arr.length > 0;
+}
+
+/**
+ * Safely falls back to original value if enhanced value is invalid
+ */
+function safeString(enhanced: string, original: string): string {
+  return isValidString(enhanced) ? enhanced : original;
+}
+
+/**
+ * Safely falls back to original array if enhanced array is empty
+ */
+function safeArray<T>(enhanced: T[], original: T[]): T[] {
+  return isValidArray(enhanced) ? enhanced : original;
+}
+
+/**
+ * Validates that enhanced CV data has all required fields
+ * Returns true if data is valid for PDF generation
+ */
+function validateEnhancedData(data: EnhancedCVData, original: CVData): boolean {
+  // Summary must not be empty if original had content
+  if (isValidString(original.summary) && !isValidString(data.summary)) {
+    console.warn('[CV Enhancement] Summary became empty - will use original');
+    return false;
+  }
+
+  // Skills must not be empty if original had skills
+  if (isValidArray(original.skills) && !isValidArray(data.skills)) {
+    console.warn('[CV Enhancement] Skills became empty - will use original');
+    return false;
+  }
+
+  // Experience must not be empty if original had experience
+  if (isValidArray(original.experiences) && !isValidArray(data.experiences)) {
+    console.warn('[CV Enhancement] Experiences became empty - will use original');
+    return false;
+  }
+
+  return true;
+}
+
+// ============================================================================
 // MAIN ENHANCER FUNCTION
 // ============================================================================
 
 /**
  * Main function to enhance all CV data
  * This is the entry point called during CV save
+ *
+ * SAFETY GUARANTEES:
+ * - Summary will NEVER be empty if user provided a summary
+ * - Skills array will NEVER be empty if user provided skills
+ * - Experience array will NEVER be empty if user provided experience
+ * - All fields fall back to original data if enhancement produces empty output
  */
 export function enhanceCV(data: CVData): EnhancedCVData {
-  // 1. Enhance professional summary (with email injection)
-  const enhancedSummary = enhanceSummary(
-    data.summary,
-    data.preferredRole,
-    data.yearsExperience,
-    data.email
-  );
+  // 1. Enhance professional summary
+  let enhancedSummary: string;
+  try {
+    enhancedSummary = enhanceSummary(
+      data.summary,
+      data.preferredRole,
+      data.yearsExperience,
+      data.email
+    );
+    // DEFENSIVE: Fall back to original if enhancement produced empty
+    enhancedSummary = safeString(enhancedSummary, data.summary);
+  } catch (err) {
+    console.error('[CV Enhancement] Summary enhancement failed:', err);
+    enhancedSummary = data.summary; // Use original on error
+  }
 
   // 2. Enhance experience descriptions
-  const enhancedExperiences = enhanceExperience(data.experiences);
+  let enhancedExperiences: ExperienceItem[];
+  try {
+    enhancedExperiences = enhanceExperience(data.experiences);
+    // DEFENSIVE: Fall back to original if enhancement produced empty array
+    enhancedExperiences = safeArray(enhancedExperiences, data.experiences);
+  } catch (err) {
+    console.error('[CV Enhancement] Experience enhancement failed:', err);
+    enhancedExperiences = data.experiences;
+  }
 
   // 3. Enhance skills based on role
-  const enhancedSkills = enhanceSkills(data.skills, data.preferredRole, data.experiences);
+  let enhancedSkills: SkillItem[];
+  try {
+    enhancedSkills = enhanceSkills(data.skills, data.preferredRole, data.experiences);
+    // DEFENSIVE: Fall back to original if enhancement produced empty array
+    enhancedSkills = safeArray(enhancedSkills, data.skills);
+  } catch (err) {
+    console.error('[CV Enhancement] Skills enhancement failed:', err);
+    enhancedSkills = data.skills;
+  }
 
   // 4. Enhance education
-  const enhancedEducations = enhanceEducation(data.educations);
+  let enhancedEducations: EducationItem[];
+  try {
+    enhancedEducations = enhanceEducation(data.educations);
+    enhancedEducations = safeArray(enhancedEducations, data.educations);
+  } catch (err) {
+    console.error('[CV Enhancement] Education enhancement failed:', err);
+    enhancedEducations = data.educations;
+  }
 
   // 5. Enhance projects
-  const enhancedProjects = enhanceProjects(data.projects);
+  let enhancedProjects: ProjectItem[];
+  try {
+    enhancedProjects = enhanceProjects(data.projects);
+    enhancedProjects = safeArray(enhancedProjects, data.projects);
+  } catch (err) {
+    console.error('[CV Enhancement] Projects enhancement failed:', err);
+    enhancedProjects = data.projects;
+  }
 
   // 6. Enhance languages
-  const enhancedLanguages = enhanceLanguages(data.languages);
+  let enhancedLanguages: LanguageItem[];
+  try {
+    enhancedLanguages = enhanceLanguages(data.languages);
+    enhancedLanguages = safeArray(enhancedLanguages, data.languages);
+  } catch (err) {
+    console.error('[CV Enhancement] Languages enhancement failed:', err);
+    enhancedLanguages = data.languages;
+  }
 
   // 7. Enhance certifications
-  const enhancedCertifications = enhanceCertifications(data.certifications);
+  let enhancedCertifications: CertificationItem[];
+  try {
+    enhancedCertifications = enhanceCertifications(data.certifications);
+    enhancedCertifications = safeArray(enhancedCertifications, data.certifications);
+  } catch (err) {
+    console.error('[CV Enhancement] Certifications enhancement failed:', err);
+    enhancedCertifications = data.certifications;
+  }
 
-  // 8. Normalize locations
-  const enhancedCity = normalizeLocation(data.city);
+  // 8. Normalize city location
+  let enhancedCity: string;
+  try {
+    enhancedCity = normalizeLocation(data.city);
+    enhancedCity = safeString(enhancedCity, data.city);
+  } catch (err) {
+    console.error('[CV Enhancement] City normalization failed:', err);
+    enhancedCity = data.city;
+  }
 
-  return {
+  const result: EnhancedCVData = {
     ...data,
     city: enhancedCity,
     summary: enhancedSummary,
@@ -958,17 +1146,32 @@ export function enhanceCV(data: CVData): EnhancedCVData {
     _enhanced: true,
     _enhancementTimestamp: new Date().toISOString(),
   };
+
+  // Final validation - log warning if any data was lost
+  validateEnhancedData(result, data);
+
+  return result;
 }
 
 /**
  * Prepares summary text with contact email for CV display
  * RULE: Email must appear on its own line, placed ABOVE Professional Summary
  * Never injected inside summary text
+ *
+ * SAFETY: Returns original summary if email is empty, never returns empty string
  */
 export function prepareSummaryWithEmail(summary: string, email: string): string {
-  if (!email) return summary;
+  // SAFETY: If summary is empty/null, return it as-is (don't add email to nothing)
+  if (!summary || summary.trim().length === 0) {
+    return summary || '';
+  }
+
+  // If no email, return summary unchanged
+  if (!email || email.trim().length === 0) {
+    return summary;
+  }
 
   // Email on its own line, above the professional summary
   // Double newline ensures clear visual separation
-  return `${email}\n\n${summary}`;
+  return `${email.trim()}\n\n${summary}`;
 }
