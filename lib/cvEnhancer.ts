@@ -167,6 +167,35 @@ const UNIVERSAL_SOFT_SKILLS = [
 ];
 
 // ============================================================================
+// ATS CONTENT LIMITS (Layout Safety)
+// ============================================================================
+
+const ATS_LIMITS = {
+  SUMMARY_MAX_WORDS: 80,
+  SUMMARY_MIN_WORDS: 60,
+  SUMMARY_MAX_LINES: 5,
+  EXPERIENCE_MAX_BULLETS: 4,
+  BULLET_MAX_WORDS: 25, // ~1 line
+  SKILL_MAX_WORDS: 2,
+  MAX_SKILLS_TO_ADD: 3, // Prevent content expansion
+  MAX_KEYWORDS_TO_ADD: 2, // Prevent keyword stuffing
+};
+
+// Vague/filler skills to remove
+const FILLER_SKILLS = [
+  'hardworking', 'hard working', 'fast learner', 'quick learner',
+  'team player', 'good communicator', 'self-motivated', 'motivated',
+  'detail oriented', 'detail-oriented', 'results driven', 'results-driven',
+  'go-getter', 'people person', 'multitasker', 'multi-tasker',
+  'dedicated', 'passionate', 'enthusiastic', 'eager',
+  'responsible', 'reliable', 'punctual', 'honest',
+  'flexible', 'creative thinker', 'critical thinker',
+  'ms office', 'microsoft office', 'word', 'excel', 'powerpoint',
+  'internet', 'email', 'typing', 'computer skills', 'basic computer',
+  'windows', 'mac', 'google', 'social media',
+];
+
+// ============================================================================
 // WEAK PHRASES TO REMOVE/REPLACE
 // ============================================================================
 
@@ -397,6 +426,127 @@ function cleanupGrammar(text: string): string {
 }
 
 /**
+ * Counts words in a string
+ */
+function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+}
+
+/**
+ * Truncates text to a maximum word count while preserving complete sentences
+ */
+function truncateToWordLimit(text: string, maxWords: number): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text;
+
+  // Truncate to max words
+  let truncated = words.slice(0, maxWords).join(' ');
+
+  // Try to end at a sentence boundary
+  const lastPeriod = truncated.lastIndexOf('.');
+  const lastQuestion = truncated.lastIndexOf('?');
+  const lastExclaim = truncated.lastIndexOf('!');
+  const lastSentenceEnd = Math.max(lastPeriod, lastQuestion, lastExclaim);
+
+  if (lastSentenceEnd > truncated.length * 0.6) {
+    // Only truncate to sentence if we keep at least 60% of content
+    truncated = truncated.slice(0, lastSentenceEnd + 1);
+  } else {
+    // Otherwise just end with a period
+    truncated = truncated.replace(/[,;:\s]+$/, '') + '.';
+  }
+
+  return truncated;
+}
+
+/**
+ * Truncates a bullet point to approximately one line (max words)
+ */
+function truncateBullet(bullet: string, maxWords: number): string {
+  const words = bullet.trim().split(/\s+/);
+  if (words.length <= maxWords) return bullet;
+
+  // Truncate and clean up
+  let truncated = words.slice(0, maxWords).join(' ');
+  truncated = truncated.replace(/[,;:\s]+$/, '');
+
+  // Ensure it ends with a period
+  if (!/[.!?]$/.test(truncated)) {
+    truncated += '.';
+  }
+
+  return truncated;
+}
+
+/**
+ * Validates and cleans a skill name
+ * - Max 2 words
+ * - No punctuation inside
+ * - Normalized casing
+ */
+function validateSkill(skillName: string): string | null {
+  // Clean and normalize
+  let cleaned = skillName.trim();
+
+  // Remove punctuation except hyphens and slashes (for things like "CI/CD")
+  cleaned = cleaned.replace(/[.,;:!?'"()[\]{}]/g, '');
+
+  // Normalize casing
+  if (cleaned === cleaned.toUpperCase() && cleaned.length > 4) {
+    // If all caps and longer than acronym, title case it
+    cleaned = toTitleCase(cleaned);
+  }
+
+  // Check word count (max 2 words, but allow slashes like "CI/CD")
+  const words = cleaned.split(/\s+/).filter(w => w.length > 0);
+  if (words.length > 2) {
+    // Try to keep only the most meaningful 2 words
+    cleaned = words.slice(0, 2).join(' ');
+  }
+
+  // Check if it's a filler skill
+  const lowerCleaned = cleaned.toLowerCase();
+  if (FILLER_SKILLS.some(filler => lowerCleaned === filler || lowerCleaned.includes(filler))) {
+    return null; // Remove filler skills
+  }
+
+  // Minimum length check
+  if (cleaned.length < 2) {
+    return null;
+  }
+
+  return cleaned;
+}
+
+/**
+ * Removes personal statements and filler from text
+ */
+function removePersonalFiller(text: string): string {
+  let result = text;
+
+  // Remove personal statements
+  const personalPatterns = [
+    /\bI am passionate about\b/gi,
+    /\bI love\b/gi,
+    /\bMy goal is to\b/gi,
+    /\bI strive to\b/gi,
+    /\bI am dedicated to\b/gi,
+    /\bI am committed to\b/gi,
+    /\bI aspire to\b/gi,
+    /\bLooking to\b/gi,
+    /\bSeeking to\b/gi,
+    /\bExcited to\b/gi,
+    /\bEager to\b/gi,
+  ];
+
+  for (const pattern of personalPatterns) {
+    result = result.replace(pattern, '');
+  }
+
+  return result.replace(/\s{2,}/g, ' ').trim();
+}
+
+/**
  * Gets relevant keywords for a role
  */
 function getKeywordsForRole(role: string): string[] {
@@ -457,6 +607,10 @@ function getTechnicalSkillsForRole(role: string): string[] {
 
 /**
  * Enhances the professional summary
+ * - Max 60-80 words, 4-5 lines
+ * - Removes personal statements and filler
+ * - Focuses on role, experience, and strengths
+ * - Light keyword alignment (no stuffing)
  */
 export function enhanceSummary(
   summary: string,
@@ -475,23 +629,29 @@ export function enhanceSummary(
     enhanced = enhanced.replace(pattern, replacement);
   }
 
-  // 2. Clean up resulting whitespace
+  // 2. Remove personal filler statements
+  enhanced = removePersonalFiller(enhanced);
+
+  // 3. Clean up resulting whitespace
   enhanced = enhanced.replace(/\s{2,}/g, ' ').trim();
 
-  // 3. Remove sentences that became empty or too short
+  // 4. Remove sentences that became empty or too short
   enhanced = enhanced.split(/(?<=[.!?])\s+/)
     .filter(sentence => sentence.trim().length > 10)
     .join(' ');
 
-  // 4. Ensure it starts with a strong statement (not "I am looking...")
+  // 5. Ensure it starts with a strong statement (not "I am looking...")
   if (/^I am\s/i.test(enhanced)) {
     // Transform "I am a software engineer" to "Software engineer with..."
     enhanced = enhanced.replace(/^I am (a |an )?/i, '');
     enhanced = enhanced.charAt(0).toUpperCase() + enhanced.slice(1);
   }
 
-  // 5. Add years of experience if not already mentioned
-  if (yearsExperience > 0 && !/\d+\s*(years?|yrs?)\s*(of)?\s*experience/i.test(enhanced)) {
+  // 6. Add years of experience if not already mentioned AND if under word limit
+  const currentWordCount = countWords(enhanced);
+  if (yearsExperience > 0 &&
+      currentWordCount < ATS_LIMITS.SUMMARY_MAX_WORDS - 10 &&
+      !/\d+\s*(years?|yrs?)\s*(of)?\s*experience/i.test(enhanced)) {
     const experiencePhrase = yearsExperience === 1
       ? '1 year of experience'
       : `${yearsExperience} years of experience`;
@@ -503,22 +663,28 @@ export function enhanceSummary(
     }
   }
 
-  // 6. Inject relevant industry keywords naturally
-  const keywords = getKeywordsForRole(preferredRole);
-  const summaryLower = enhanced.toLowerCase();
+  // 7. Light keyword alignment - only add if under word limit (prevent stuffing)
+  const wordsAfterExp = countWords(enhanced);
+  if (wordsAfterExp < ATS_LIMITS.SUMMARY_MAX_WORDS - 15) {
+    const keywords = getKeywordsForRole(preferredRole);
+    const summaryLower = enhanced.toLowerCase();
 
-  // Only add keywords that aren't already present
-  const missingKeywords = keywords.filter(kw => !summaryLower.includes(kw.toLowerCase()));
+    // Only add keywords that aren't already present - limit to MAX_KEYWORDS_TO_ADD
+    const missingKeywords = keywords
+      .filter(kw => !summaryLower.includes(kw.toLowerCase()))
+      .slice(0, ATS_LIMITS.MAX_KEYWORDS_TO_ADD);
 
-  if (missingKeywords.length > 0 && !enhanced.includes('Skilled in')) {
-    // Add 2-3 missing keywords naturally at the end
-    const keywordsToAdd = missingKeywords.slice(0, 3);
-    enhanced = enhanced.trim();
-    if (!enhanced.endsWith('.')) enhanced += '.';
-    enhanced += ` Skilled in ${keywordsToAdd.join(', ')}.`;
+    if (missingKeywords.length > 0 && !enhanced.includes('Skilled in')) {
+      enhanced = enhanced.trim();
+      if (!enhanced.endsWith('.')) enhanced += '.';
+      enhanced += ` Skilled in ${missingKeywords.join(', ')}.`;
+    }
   }
 
-  // 7. Final grammar cleanup
+  // 8. ENFORCE WORD LIMIT - truncate intelligently if exceeded
+  enhanced = truncateToWordLimit(enhanced, ATS_LIMITS.SUMMARY_MAX_WORDS);
+
+  // 9. Final grammar cleanup
   enhanced = cleanupGrammar(enhanced);
 
   return enhanced;
@@ -526,6 +692,10 @@ export function enhanceSummary(
 
 /**
  * Enhances experience descriptions
+ * - Bullet points ONLY (no paragraphs)
+ * - Max 3-4 bullets per role
+ * - Each bullet: one sentence, one idea, one line max
+ * - Compress long input; never expand
  */
 export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem[] {
   return experiences.map(exp => {
@@ -535,8 +705,11 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
       return exp;
     }
 
-    // 1. Split into bullet points if not already
-    let bullets = description.split(/[\n•\-\*]/).map(b => b.trim()).filter(b => b.length > 0);
+    // 1. Split into bullet points - handle various formats
+    let bullets = description
+      .split(/[\n•\-\*]|(?<=[.!?])\s+(?=[A-Z])/) // Split on bullets, newlines, or sentence boundaries
+      .map(b => b.trim())
+      .filter(b => b.length > 5); // Filter out very short fragments
 
     // 2. Enhance each bullet point
     bullets = bullets.map(bullet => {
@@ -550,8 +723,11 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
         enhanced = convertToPastTense(enhanced);
       }
 
-      // Add inferable metrics
-      enhanced = addInferrableMetrics(enhanced, exp.title);
+      // DO NOT add metrics - this could expand content
+      // enhanced = addInferrableMetrics(enhanced, exp.title);
+
+      // Truncate to one line max (BULLET_MAX_WORDS words)
+      enhanced = truncateBullet(enhanced, ATS_LIMITS.BULLET_MAX_WORDS);
 
       // Clean up grammar
       enhanced = cleanupGrammar(enhanced);
@@ -559,10 +735,15 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
       return enhanced;
     });
 
-    // 3. Rejoin bullets
+    // 3. ENFORCE MAX BULLETS - keep most relevant (usually first ones)
+    if (bullets.length > ATS_LIMITS.EXPERIENCE_MAX_BULLETS) {
+      bullets = bullets.slice(0, ATS_LIMITS.EXPERIENCE_MAX_BULLETS);
+    }
+
+    // 4. Rejoin bullets with newlines (bullet point format)
     const enhancedDescription = bullets.join('\n');
 
-    // 4. Normalize dates and location
+    // 5. Normalize dates and location
     return {
       ...exp,
       description: enhancedDescription,
@@ -575,64 +756,84 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
 
 /**
  * Enhances skills list based on role
+ * - Max 2 words per skill
+ * - No duplicates
+ * - No punctuation inside skills
+ * - Normalized casing
+ * - Remove vague filler skills
+ * - Prevent content expansion
  */
 export function enhanceSkills(
   skills: SkillItem[],
   preferredRole: string,
   experiences: ExperienceItem[]
 ): SkillItem[] {
-  // Get existing skill names (lowercase for comparison)
-  const existingSkillNames = new Set(skills.map(s => s.name.toLowerCase()));
+  const seenSkills = new Set<string>(); // For duplicate detection
+  const validatedSkills: SkillItem[] = [];
+  let removedCount = 0;
 
-  // Normalize existing skills
-  const enhancedSkills = skills.map(skill => ({
-    ...skill,
-    name: skill.name.trim(),
-  }));
+  // 1. Validate and clean existing skills
+  for (const skill of skills) {
+    const validated = validateSkill(skill.name);
 
-  // Get suggested skills based on role
-  const suggestedTechnical = getTechnicalSkillsForRole(preferredRole);
+    if (validated === null) {
+      // Filler skill removed
+      removedCount++;
+      continue;
+    }
 
-  // Extract skills mentioned in experience descriptions
-  const experienceText = experiences.map(e => `${e.title} ${e.description}`).join(' ').toLowerCase();
+    // Check for duplicates (case-insensitive)
+    const lowerValidated = validated.toLowerCase();
+    if (seenSkills.has(lowerValidated)) {
+      removedCount++;
+      continue;
+    }
 
-  // Add relevant suggested skills that aren't already present
-  // and appear to be relevant based on experience
-  const skillsToAdd: SkillItem[] = [];
+    seenSkills.add(lowerValidated);
+    validatedSkills.push({
+      ...skill,
+      name: validated,
+    });
+  }
 
-  for (const skill of suggestedTechnical) {
-    const skillLower = skill.toLowerCase();
-    if (!existingSkillNames.has(skillLower)) {
-      // Check if this skill is mentioned or implied in experiences
-      const isRelevant = experienceText.includes(skillLower) ||
-        preferredRole.toLowerCase().includes(skillLower.split(' ')[0]);
+  // 2. LAYOUT SAFETY: Only add skills if we removed some AND stay under limit
+  const maxToAdd = Math.min(removedCount, ATS_LIMITS.MAX_SKILLS_TO_ADD);
+
+  if (maxToAdd > 0) {
+    // Get suggested skills based on role
+    const suggestedTechnical = getTechnicalSkillsForRole(preferredRole);
+    const experienceText = experiences.map(e => `${e.title} ${e.description}`).join(' ').toLowerCase();
+
+    let addedCount = 0;
+
+    // Add relevant technical skills
+    for (const skill of suggestedTechnical) {
+      if (addedCount >= maxToAdd) break;
+
+      const validated = validateSkill(skill);
+      if (!validated) continue;
+
+      const lowerValidated = validated.toLowerCase();
+      if (seenSkills.has(lowerValidated)) continue;
+
+      // Only add if clearly relevant
+      const isRelevant = experienceText.includes(lowerValidated) ||
+        preferredRole.toLowerCase().includes(lowerValidated.split(' ')[0]);
 
       if (isRelevant) {
-        skillsToAdd.push({
+        seenSkills.add(lowerValidated);
+        validatedSkills.push({
           id: crypto.randomUUID(),
-          name: skill,
+          name: validated,
         });
+        addedCount++;
       }
     }
+
+    // DO NOT add universal soft skills - these are usually filler
   }
 
-  // Add universal soft skills that aren't present (limit to 2)
-  let softSkillsAdded = 0;
-  for (const skill of UNIVERSAL_SOFT_SKILLS) {
-    if (softSkillsAdded >= 2) break;
-    if (!existingSkillNames.has(skill.toLowerCase())) {
-      skillsToAdd.push({
-        id: crypto.randomUUID(),
-        name: skill,
-      });
-      softSkillsAdded++;
-    }
-  }
-
-  // Limit total added skills to avoid overwhelming
-  const finalSkillsToAdd = skillsToAdd.slice(0, 5);
-
-  return [...enhancedSkills, ...finalSkillsToAdd];
+  return validatedSkills;
 }
 
 /**
@@ -761,12 +962,13 @@ export function enhanceCV(data: CVData): EnhancedCVData {
 
 /**
  * Prepares summary text with contact email for CV display
- * The email is added as the first line of contact info
+ * RULE: Email must appear on its own line, placed ABOVE Professional Summary
+ * Never injected inside summary text
  */
 export function prepareSummaryWithEmail(summary: string, email: string): string {
   if (!email) return summary;
 
-  // Add email as contact info at the beginning of summary
-  // This ensures ATS can find the email in the CV content
-  return `Contact: ${email}\n\n${summary}`;
+  // Email on its own line, above the professional summary
+  // Double newline ensures clear visual separation
+  return `${email}\n\n${summary}`;
 }
