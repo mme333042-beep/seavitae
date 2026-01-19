@@ -201,23 +201,38 @@ const FILLER_SKILLS = [
 
 const WEAK_PHRASES: { pattern: RegExp; replacement: string }[] = [
   // Job-seeking desperation phrases
-  { pattern: /\bi am looking for (a |an )?job\b/gi, replacement: '' },
-  { pattern: /\bi need (a |an )?opportunity\b/gi, replacement: '' },
-  { pattern: /\bi am seeking (a |an )?position\b/gi, replacement: '' },
-  { pattern: /\blooking for (a |an )?chance\b/gi, replacement: '' },
-  { pattern: /\bwilling to learn\b/gi, replacement: 'committed to continuous learning' },
+  { pattern: /\bi am looking for (a |an )?(job|position|opportunity|role)\b/gi, replacement: '' },
+  { pattern: /\bi need (a |an )?(job|opportunity|position|role)\b/gi, replacement: '' },
+  { pattern: /\bi am seeking (a |an )?(job|position|opportunity|role)\b/gi, replacement: '' },
+  { pattern: /\blooking for (a |an )?(job|chance|opportunity|position|role)\b/gi, replacement: '' },
+  { pattern: /\bopen to learning\b/gi, replacement: '' },
+  { pattern: /\bopen to (new )?(opportunities|roles|challenges)\b/gi, replacement: '' },
+  { pattern: /\bwilling to learn\b/gi, replacement: '' },
+  { pattern: /\bwillingness to learn\b/gi, replacement: '' },
   { pattern: /\bi want to work\b/gi, replacement: '' },
   { pattern: /\bi hope to\b/gi, replacement: '' },
   { pattern: /\bplease give me\b/gi, replacement: '' },
   { pattern: /\bi really want\b/gi, replacement: '' },
+  { pattern: /\bgaining real world experience\b/gi, replacement: '' },
+  { pattern: /\bin a related role\b/gi, replacement: '' },
 
-  // Weak qualifiers
+  // Weak qualifiers and filler adjectives
   { pattern: /\bi think i (am|can)\b/gi, replacement: 'I' },
   { pattern: /\bi believe i (am|can)\b/gi, replacement: 'I' },
   { pattern: /\bsort of\b/gi, replacement: '' },
   { pattern: /\bkind of\b/gi, replacement: '' },
   { pattern: /\bpretty much\b/gi, replacement: '' },
   { pattern: /\bbasically\b/gi, replacement: '' },
+  { pattern: /\ba dedicated\b/gi, replacement: 'A' },
+  { pattern: /\bdedicated\b/gi, replacement: '' },
+  { pattern: /\bhardworking\b/gi, replacement: '' },
+  { pattern: /\bhard-working\b/gi, replacement: '' },
+
+  // Generic filler sentences
+  { pattern: /\binterested in building skills in areas where i can contribute,? grow,? and develop new skills[^.]*\./gi, replacement: '' },
+  { pattern: /\binterested in building skills\b/gi, replacement: '' },
+  { pattern: /\bthat help businesses run smoothly\b/gi, replacement: '' },
+  { pattern: /\bwhere i can contribute,? grow,? and\b/gi, replacement: '' },
 
   // Generic filler
   { pattern: /\betc\.?\b/gi, replacement: '' },
@@ -524,7 +539,7 @@ function validateSkill(skillName: string): string | null {
 function removePersonalFiller(text: string): string {
   let result = text;
 
-  // Remove personal statements
+  // Remove personal statements and weak openers
   const personalPatterns = [
     /\bI am passionate about\b/gi,
     /\bI love\b/gi,
@@ -537,6 +552,14 @@ function removePersonalFiller(text: string): string {
     /\bSeeking to\b/gi,
     /\bExcited to\b/gi,
     /\bEager to\b/gi,
+    /\bOpen to\b/gi,
+    /\bInterested in\b/gi,
+    /\bA dedicated\b/gi,
+    /\bA motivated\b/gi,
+    /\bA passionate\b/gi,
+    /\bA hardworking\b/gi,
+    /\bwith understanding of\b/gi,
+    /\bwith a strong understanding of\b/gi,
   ];
 
   for (const pattern of personalPatterns) {
@@ -781,8 +804,9 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
       bullets = [cleanupGrammar(originalDescription.trim())];
     }
 
-    // 4. Join bullets with newlines (bullet point format)
-    const enhancedDescription = bullets.join('\n');
+    // 4. Join bullets with <br> for HTML rendering (newlines don't render in HTML <p> tags)
+    // Prefix each bullet with • for visual clarity
+    const enhancedDescription = bullets.map(b => `• ${b}`).join('<br>');
 
     // 5. Normalize dates and location
     return {
