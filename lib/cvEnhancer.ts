@@ -539,30 +539,39 @@ function validateSkill(skillName: string): string | null {
 function removePersonalFiller(text: string): string {
   let result = text;
 
-  // Remove personal statements and weak openers
-  const personalPatterns = [
-    /\bI am passionate about\b/gi,
-    /\bI love\b/gi,
-    /\bMy goal is to\b/gi,
-    /\bI strive to\b/gi,
-    /\bI am dedicated to\b/gi,
-    /\bI am committed to\b/gi,
-    /\bI aspire to\b/gi,
-    /\bLooking to\b/gi,
-    /\bSeeking to\b/gi,
-    /\bExcited to\b/gi,
-    /\bEager to\b/gi,
-    /\bOpen to\b/gi,
-    /\bInterested in\b/gi,
-    /\bA dedicated\b/gi,
-    /\bA motivated\b/gi,
-    /\bA passionate\b/gi,
-    /\bA hardworking\b/gi,
-    /\bwith understanding of\b/gi,
-    /\bwith a strong understanding of\b/gi,
+  // CONSERVATIVE APPROACH: Only remove phrases that can be safely removed
+  // without breaking sentence grammar. Use REPLACEMENTS where possible.
+
+  // Safe replacements (replace with better phrasing, not empty string)
+  const safeReplacements: { pattern: RegExp; replacement: string }[] = [
+    // These can be replaced with professional equivalents
+    { pattern: /\bI am passionate about\b/gi, replacement: 'Specializing in' },
+    { pattern: /\bwith understanding of\b/gi, replacement: 'with expertise in' },
+    { pattern: /\bwith a strong understanding of\b/gi, replacement: 'with strong expertise in' },
+    { pattern: /\bI am dedicated to\b/gi, replacement: 'Dedicated to' },
+    { pattern: /\bI am committed to\b/gi, replacement: 'Committed to' },
+    // Remove "I am a/an" at start but keep what follows
+    { pattern: /^I am (a |an )?(?=[A-Z])/i, replacement: '' },
   ];
 
-  for (const pattern of personalPatterns) {
+  for (const { pattern, replacement } of safeReplacements) {
+    result = result.replace(pattern, replacement);
+  }
+
+  // Only remove phrases that are COMPLETE (won't leave broken sentences)
+  // These are typically at the start or end of sentences
+  const safeRemovals = [
+    /\bI love\s+\w+ing\b/gi, // "I love coding" -> remove whole phrase
+    /\bMy goal is to\b/gi,
+    /\bI strive to\b/gi,
+    /\bI aspire to\b/gi,
+    /\bLooking to\s+\w+\b/gi, // Only if followed by verb
+    /\bSeeking to\s+\w+\b/gi,
+    /\bExcited to\b/gi,
+    /\bEager to\b/gi,
+  ];
+
+  for (const pattern of safeRemovals) {
     result = result.replace(pattern, '');
   }
 
@@ -764,93 +773,112 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
       return exp;
     }
 
-    // 1. MANDATORY: Split into bullet points from ANY format
-    // Handle: sentences, commas, newlines, bullet chars, semicolons
-    // IMPORTANT: Preserve hyphenated words like "walk-in", "full-time", etc.
+    // 1. CONSERVATIVE SPLIT: Only split on clear separators, preserve hyphenated words
+    // The goal is to NOT break things - if unsure, keep content together
 
     let workingText = originalDescription;
 
-    // Protect hyphenated words by temporarily replacing hyphens between word chars
-    workingText = workingText.replace(/(\w)-(\w)/g, '$1{{HYPHEN}}$2');
+    // First, check if the text already has bullet formatting (• or -)
+    const hasBulletFormatting = /^[\s]*[•\-\*]\s/m.test(workingText);
 
-    // Protect email addresses
-    workingText = workingText.replace(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/g,
-      (match) => match.replace(/\./g, '{{DOT}}').replace(/-/g, '{{HYPHEN}}'));
+    let bullets: string[];
 
-    let bullets = workingText
-      // First normalize common separators
-      .replace(/;/g, '.')
-      .replace(/,\s*(?=[A-Z])/g, '. ') // Comma before capital letter = new sentence
-      // Split on: newlines, bullet chars at start of line, sentence endings
-      // Note: Only split on standalone bullet chars, not hyphens in words
-      .split(/\n+|(?:^|\s)[•\*]\s|(?<=[.!?])\s+/)
-      .map(b => b.trim())
-      // Restore protected characters
-      .map(b => b.replace(/\{\{HYPHEN\}\}/g, '-').replace(/\{\{DOT\}\}/g, '.'))
-      .filter(b => b.length > 3 && b !== '.'); // Filter empty and orphan periods
-
-    // If nothing split, treat entire text as one bullet
-    if (bullets.length === 0) {
-      bullets = [originalDescription.trim()];
+    if (hasBulletFormatting) {
+      // Text is already bulleted - split on bullet chars at line starts only
+      bullets = workingText
+        .split(/\n/)
+        .map(line => line.replace(/^[\s]*[•\-\*]\s*/, '').trim())
+        .filter(b => b.length > 5);
+    } else {
+      // Text is paragraph form - split ONLY on clear sentence endings
+      // Be VERY conservative to avoid breaking "walk-in" etc.
+      bullets = workingText
+        // Split only on ". " followed by capital letter (clear sentence boundary)
+        .split(/\.\s+(?=[A-Z])/)
+        .map(b => b.trim())
+        // Add period back if it was removed
+        .map(b => b.endsWith('.') ? b : b + '.')
+        .filter(b => b.length > 5 && !/^[.!?,;:\s]+$/.test(b));
     }
 
-    // 2. Enhance each bullet - MANDATORY
+    // If nothing split or all filtered out, use original as single bullet
+    if (bullets.length === 0) {
+      bullets = [originalDescription.trim()];
+      // Ensure it ends with period
+      if (!bullets[0].endsWith('.') && !bullets[0].endsWith('!') && !bullets[0].endsWith('?')) {
+        bullets[0] += '.';
+      }
+    }
+
+    // 2. CONSERVATIVE enhancement - don't break bullets, just clean them up
     bullets = bullets.map(bullet => {
       let enhanced = bullet.trim();
 
       // Skip if this is just punctuation or too short
-      if (enhanced.length < 4 || /^[.!?,;:\s]+$/.test(enhanced)) {
+      if (enhanced.length < 5 || /^[.!?,;:\s]+$/.test(enhanced)) {
         return '';
       }
 
-      // Remove leading punctuation artifacts
-      enhanced = enhanced.replace(/^[.!?,;:\s]+/, '');
+      // Remove leading/trailing punctuation artifacts (but keep content)
+      enhanced = enhanced.replace(/^[.!?,;:\s]+/, '').replace(/[,;:\s]+$/, '');
 
-      // Replace weak verbs with strong action verbs
-      enhanced = replaceWeakVerbs(enhanced);
+      // OPTIONAL: Replace weak verbs - only at the very start of bullet
+      // Be conservative - only replace if it's clearly at the start
+      if (/^(did|made|worked on|was responsible for|helped with)\s/i.test(enhanced)) {
+        enhanced = replaceWeakVerbs(enhanced);
+      }
 
-      // Convert to past tense if not current role
-      if (!exp.current) {
+      // OPTIONAL: Convert to past tense only for clear present tense verbs at start
+      if (!exp.current && /^(manage|lead|develop|create|handle|work)\s/i.test(enhanced)) {
         enhanced = convertToPastTense(enhanced);
       }
 
-      // Truncate to ≤20 words
-      enhanced = truncateBullet(enhanced, ATS_LIMITS.BULLET_MAX_WORDS);
+      // NO TRUNCATION - keep full content (was breaking sentences)
+      // The 20-word limit was causing incomplete sentences
 
-      // Ensure starts with capital, ends with period
-      enhanced = cleanupGrammar(enhanced);
+      // Ensure proper capitalization and ending punctuation
+      if (enhanced.length > 0) {
+        enhanced = enhanced.charAt(0).toUpperCase() + enhanced.slice(1);
+        if (!enhanced.endsWith('.') && !enhanced.endsWith('!') && !enhanced.endsWith('?')) {
+          enhanced += '.';
+        }
+      }
 
-      // Final cleanup: remove any duplicate periods
+      // Clean up duplicate periods
       enhanced = enhanced.replace(/\.{2,}/g, '.').replace(/\s+\./g, '.');
 
       return enhanced;
-    }).filter(b => b && b.trim().length > 3 && !/^[.!?,;:\s]+$/.test(b));
+    }).filter(b => b && b.trim().length > 5 && !/^[.!?,;:\s]+$/.test(b));
 
     // 3. Enforce max 4 bullets per role
     if (bullets.length > ATS_LIMITS.EXPERIENCE_MAX_BULLETS) {
       bullets = bullets.slice(0, ATS_LIMITS.EXPERIENCE_MAX_BULLETS);
     }
 
-    // FALLBACK: Only if literally empty
+    // 4. STRICT final cleanup - remove ANY remaining junk
+    bullets = bullets
+      .map(b => b.trim())
+      .filter(b => {
+        // Must have actual alphabetic content, not just punctuation
+        const hasContent = /[a-zA-Z]{3,}/.test(b); // At least 3 letters
+        const isJustPunctuation = /^[.!?,;:\s•\-\*]+$/.test(b);
+        const isTooShort = b.replace(/[^a-zA-Z]/g, '').length < 5;
+        return hasContent && !isJustPunctuation && !isTooShort;
+      });
+
+    // FALLBACK: If all bullets were filtered, use original text
     if (bullets.length === 0) {
       console.warn('[CV Enhancement] Experience description became empty - using original');
-      bullets = [cleanupGrammar(originalDescription.trim())];
+      let original = originalDescription.trim();
+      // Clean up original - ensure it ends properly
+      if (!original.endsWith('.') && !original.endsWith('!') && !original.endsWith('?')) {
+        original += '.';
+      }
+      bullets = [original];
     }
 
-    // 4. Final cleanup: filter out any remaining orphan periods or invalid bullets
-    bullets = bullets.filter(b => {
-      const trimmed = b.trim();
-      // Must be more than just punctuation and have some actual content
-      return trimmed.length > 4 && !/^[.!?,;:\s•\-\*]+$/.test(trimmed);
-    });
-
-    // If all bullets were filtered out, use original
-    if (bullets.length === 0) {
-      bullets = [cleanupGrammar(originalDescription.trim())];
-    }
-
-    // 5. Join bullets with <br> for HTML rendering (newlines don't render in HTML <p> tags)
-    // Prefix each bullet with • for visual clarity
+    // 5. Join bullets with <br> for HTML rendering
+    // Each bullet gets • prefix, joined by <br> (no extra dots or spacing)
     const enhancedDescription = bullets.map(b => `• ${b}`).join('<br>');
 
     // 5. Normalize dates and location
@@ -905,11 +933,10 @@ export function enhanceSkills(
       normalized = toTitleCase(normalized);
     }
 
-    // Limit to max 2 words
+    // NO WORD LIMIT - preserve multi-word skills like "Attention to Detail"
+    // The 2-word limit was breaking skills, so it's been removed
     const words = normalized.split(/\s+/).filter(w => w.length > 0);
-    if (words.length > 2) {
-      normalized = words.slice(0, 2).join(' ');
-    }
+    normalized = words.join(' '); // Just clean up extra spaces
 
     // Skip if too short
     if (normalized.length < 2) {
