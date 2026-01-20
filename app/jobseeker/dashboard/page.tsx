@@ -34,7 +34,7 @@ function getCVStateLabel(isVisible: boolean, isLocked: boolean): string {
   return "Draft";
 }
 
-function buildCVData(jobseeker: Jobseeker, sections: CVSection[]): CVData {
+function buildCVData(jobseeker: Jobseeker, sections: CVSection[], email?: string): CVData {
   // Extract data from CV sections
   const experienceSection = sections.find(s => s.section_type === "experience");
   const educationSection = sections.find(s => s.section_type === "education");
@@ -52,6 +52,7 @@ function buildCVData(jobseeker: Jobseeker, sections: CVSection[]): CVData {
 
   return {
     fullName: jobseeker.full_name,
+    email: email || "",
     city: jobseeker.city || "",
     preferredRole: jobseeker.preferred_role || "",
     bio: jobseeker.bio || "",
@@ -122,6 +123,7 @@ export default function JobseekerDashboardPage() {
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingInterviews, setPendingInterviews] = useState(0);
+  const [userEmail, setUserEmail] = useState<string>("");
 
   useEffect(() => {
     async function loadData() {
@@ -138,6 +140,9 @@ export default function JobseekerDashboardPage() {
           router.push("/employer/dashboard");
           return;
         }
+
+        // Store user email for PDF generation
+        setUserEmail(userProfile.user?.email || "");
 
         const profile = await getMyJobseekerProfile();
         if (!profile) {
@@ -217,7 +222,7 @@ export default function JobseekerDashboardPage() {
     if (!jobseeker) return;
 
     if (isPrintAvailable()) {
-      const cvData = buildCVData(jobseeker, sections);
+      const cvData = buildCVData(jobseeker, sections, userEmail);
       downloadCVAsPDF(cvData);
     } else {
       alert("PDF download is not available in this browser.");

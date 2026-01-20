@@ -645,8 +645,7 @@ function getTechnicalSkillsForRole(role: string): string[] {
 export function enhanceSummary(
   summary: string,
   preferredRole: string,
-  yearsExperience: number,
-  email: string
+  yearsExperience: number
 ): string {
   // If input is empty, nothing to enhance
   if (!summary || summary.trim().length === 0) {
@@ -668,7 +667,16 @@ export function enhanceSummary(
   enhanced = enhanced.replace(/\s{2,}/g, ' ').trim();
 
   // 4. Filter very short sentences (likely fragments from removal)
-  const sentences = enhanced.split(/(?<=[.!?])\s+/)
+  // IMPORTANT: Don't split on periods within email addresses or abbreviations
+  // Use a smarter split that avoids breaking emails like "name@gmail.com"
+  const sentences = enhanced
+    // Temporarily protect email addresses from being split
+    .replace(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/g, (match) => match.replace(/\./g, '{{DOT}}'))
+    // Temporarily protect common abbreviations
+    .replace(/\b(Mr|Mrs|Ms|Dr|Prof|Inc|Ltd|Corp|etc|vs|i\.e|e\.g)\./gi, '$1{{DOT}}')
+    // Now split on sentence endings
+    .split(/(?<=[.!?])\s+/)
+    .map(sentence => sentence.replace(/\{\{DOT\}\}/g, '.')) // Restore dots
     .filter(sentence => sentence.trim().length > 5);
 
   if (sentences.length > 0) {
@@ -758,14 +766,28 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
 
     // 1. MANDATORY: Split into bullet points from ANY format
     // Handle: sentences, commas, newlines, bullet chars, semicolons
-    let bullets = originalDescription
+    // IMPORTANT: Preserve hyphenated words like "walk-in", "full-time", etc.
+
+    let workingText = originalDescription;
+
+    // Protect hyphenated words by temporarily replacing hyphens between word chars
+    workingText = workingText.replace(/(\w)-(\w)/g, '$1{{HYPHEN}}$2');
+
+    // Protect email addresses
+    workingText = workingText.replace(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/g,
+      (match) => match.replace(/\./g, '{{DOT}}').replace(/-/g, '{{HYPHEN}}'));
+
+    let bullets = workingText
       // First normalize common separators
       .replace(/;/g, '.')
       .replace(/,\s*(?=[A-Z])/g, '. ') // Comma before capital letter = new sentence
-      // Split on: newlines, bullet chars, sentence endings
-      .split(/[\n•\-\*]|(?<=[.!?])\s+/)
+      // Split on: newlines, bullet chars at start of line, sentence endings
+      // Note: Only split on standalone bullet chars, not hyphens in words
+      .split(/\n+|(?:^|\s)[•\*]\s|(?<=[.!?])\s+/)
       .map(b => b.trim())
-      .filter(b => b.length > 3); // Only filter truly empty
+      // Restore protected characters
+      .map(b => b.replace(/\{\{HYPHEN\}\}/g, '-').replace(/\{\{DOT\}\}/g, '.'))
+      .filter(b => b.length > 3 && b !== '.'); // Filter empty and orphan periods
 
     // If nothing split, treat entire text as one bullet
     if (bullets.length === 0) {
@@ -774,7 +796,15 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
 
     // 2. Enhance each bullet - MANDATORY
     bullets = bullets.map(bullet => {
-      let enhanced = bullet;
+      let enhanced = bullet.trim();
+
+      // Skip if this is just punctuation or too short
+      if (enhanced.length < 4 || /^[.!?,;:\s]+$/.test(enhanced)) {
+        return '';
+      }
+
+      // Remove leading punctuation artifacts
+      enhanced = enhanced.replace(/^[.!?,;:\s]+/, '');
 
       // Replace weak verbs with strong action verbs
       enhanced = replaceWeakVerbs(enhanced);
@@ -790,8 +820,11 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
       // Ensure starts with capital, ends with period
       enhanced = cleanupGrammar(enhanced);
 
+      // Final cleanup: remove any duplicate periods
+      enhanced = enhanced.replace(/\.{2,}/g, '.').replace(/\s+\./g, '.');
+
       return enhanced;
-    }).filter(b => b && b.trim().length > 0);
+    }).filter(b => b && b.trim().length > 3 && !/^[.!?,;:\s]+$/.test(b));
 
     // 3. Enforce max 4 bullets per role
     if (bullets.length > ATS_LIMITS.EXPERIENCE_MAX_BULLETS) {
@@ -804,7 +837,19 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
       bullets = [cleanupGrammar(originalDescription.trim())];
     }
 
-    // 4. Join bullets with <br> for HTML rendering (newlines don't render in HTML <p> tags)
+    // 4. Final cleanup: filter out any remaining orphan periods or invalid bullets
+    bullets = bullets.filter(b => {
+      const trimmed = b.trim();
+      // Must be more than just punctuation and have some actual content
+      return trimmed.length > 4 && !/^[.!?,;:\s•\-\*]+$/.test(trimmed);
+    });
+
+    // If all bullets were filtered out, use original
+    if (bullets.length === 0) {
+      bullets = [cleanupGrammar(originalDescription.trim())];
+    }
+
+    // 5. Join bullets with <br> for HTML rendering (newlines don't render in HTML <p> tags)
     // Prefix each bullet with • for visual clarity
     const enhancedDescription = bullets.map(b => `• ${b}`).join('<br>');
 
@@ -1054,8 +1099,7 @@ export function enhanceCV(data: CVData): EnhancedCVData {
     enhancedSummary = enhanceSummary(
       data.summary,
       data.preferredRole,
-      data.yearsExperience,
-      data.email
+      data.yearsExperience
     );
     enhancedSummary = fallbackIfEmpty(enhancedSummary, data.summary);
   } catch (err) {
@@ -1151,24 +1195,17 @@ export function enhanceCV(data: CVData): EnhancedCVData {
 }
 
 /**
- * Prepares summary text with contact email for CV display
- * RULE: Email must appear on its own line, placed ABOVE Professional Summary
- * Never injected inside summary text
+ * @deprecated DO NOT USE - This function injects email into summary text which causes
+ * issues when the text is processed by enhancement functions. Email addresses get
+ * mangled by sentence-splitting regex.
  *
- * SAFETY: Returns original summary if email is empty, never returns empty string
+ * Instead, email should be handled at the UI/PDF rendering level, not stored in content.
+ * The PDF generator (pdfGenerator.ts) should add a Contact Information section if needed.
+ *
+ * Keeping this function for backwards compatibility but it should not be called.
  */
 export function prepareSummaryWithEmail(summary: string, email: string): string {
-  // SAFETY: If summary is empty/null, return it as-is (don't add email to nothing)
-  if (!summary || summary.trim().length === 0) {
-    return summary || '';
-  }
-
-  // If no email, return summary unchanged
-  if (!email || email.trim().length === 0) {
-    return summary;
-  }
-
-  // Email on its own line, above the professional summary
-  // Double newline ensures clear visual separation
-  return `${email.trim()}\n\n${summary}`;
+  console.warn('[CV Enhancement] prepareSummaryWithEmail is deprecated - email should not be injected into summary');
+  // Return summary unchanged - do NOT inject email
+  return summary || '';
 }

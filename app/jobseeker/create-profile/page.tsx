@@ -9,7 +9,7 @@ import { getCurrentUser } from "@/lib/supabase/auth";
 import { createJobseekerProfile, getMyJobseekerProfile, getMyCV, updateCVSection } from "@/lib/supabase/services/jobseekers";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { CVSectionType } from "@/lib/supabase/types";
-import { enhanceCV, prepareSummaryWithEmail } from "@/lib/cvEnhancer";
+import { enhanceCV } from "@/lib/cvEnhancer";
 
 interface ExperienceEntry {
   id: string;
@@ -409,12 +409,11 @@ export default function CreateProfilePage() {
         return;
       }
 
-      // Prepare summary with email contact info for CV display
-      const summaryWithEmail = prepareSummaryWithEmail(enhancedCV.summary, userEmail);
-
       // Save CV sections with enhanced data
+      // Note: Email is NOT injected into summary - it would get mangled by text processing
+      // Email display should be handled at the UI/PDF level, not in content storage
       const sectionsToSave: { type: CVSectionType; content: { items: unknown[] } | { text: string } }[] = [
-        { type: "summary", content: { text: summaryWithEmail } },
+        { type: "summary", content: { text: enhancedCV.summary } },
         { type: "experience", content: { items: enhancedCV.experiences } },
         { type: "education", content: { items: enhancedCV.educations } },
         { type: "skills", content: { items: enhancedCV.skills } },

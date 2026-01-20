@@ -5,6 +5,7 @@
 
 export interface CVData {
   fullName: string;
+  email?: string;
   city: string;
   preferredRole: string;
   bio: string;
@@ -224,6 +225,13 @@ export function generatePrintableCV(cv: CVData): string {
     <p class="header-meta">${cv.city}</p>
     <p class="header-role">${cv.preferredRole}</p>
   </header>
+
+  ${cv.email ? `
+  <section class="section">
+    <h2>Contact Information</h2>
+    <p>${cv.email}</p>
+  </section>
+  ` : ""}
 
   ${cv.bio ? `
   <section class="section">
