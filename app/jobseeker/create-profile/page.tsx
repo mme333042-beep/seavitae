@@ -365,13 +365,38 @@ export default function CreateProfilePage() {
 
       const enhancedCV = enhanceCV(cvDataToEnhance);
 
+      // Try AI enhancement for summary (with fallback to regex)
+      let finalSummary = enhancedCV.summary;
+      try {
+        const aiResponse = await fetch('/api/enhance-summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            summary: bio, // Send original, let AI enhance from scratch
+            preferredRole,
+            yearsExperience,
+          }),
+        });
+
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          if (aiData.enhanced) {
+            finalSummary = aiData.enhanced;
+            console.log(`[CV Save] Summary enhanced via ${aiData.method}`);
+          }
+        }
+      } catch (aiError) {
+        // AI failed silently - use regex-enhanced version
+        console.warn('[CV Save] AI enhancement failed, using regex fallback');
+      }
+
       // Create or update jobseeker profile with enhanced data
       if (!existingJobseekerId) {
         const result = await createJobseekerProfile(userId, {
           full_name: fullName,
           city: enhancedCV.city,
           preferred_role: preferredRole,
-          bio: enhancedCV.summary,
+          bio: finalSummary,
           years_experience: yearsExperience,
           age,
         });
@@ -396,7 +421,7 @@ export default function CreateProfilePage() {
             full_name: fullName,
             city: enhancedCV.city,
             preferred_role: preferredRole,
-            bio: enhancedCV.summary,
+            bio: finalSummary,
             years_experience: yearsExperience,
             age,
           })
@@ -413,7 +438,7 @@ export default function CreateProfilePage() {
       // Note: Email is NOT injected into summary - it would get mangled by text processing
       // Email display should be handled at the UI/PDF level, not in content storage
       const sectionsToSave: { type: CVSectionType; content: { items: unknown[] } | { text: string } }[] = [
-        { type: "summary", content: { text: enhancedCV.summary } },
+        { type: "summary", content: { text: finalSummary } },
         { type: "experience", content: { items: enhancedCV.experiences } },
         { type: "education", content: { items: enhancedCV.educations } },
         { type: "skills", content: { items: enhancedCV.skills } },
