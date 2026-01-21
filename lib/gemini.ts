@@ -42,26 +42,37 @@ export async function enhanceSummaryWithAI(
     return null; // Nothing meaningful to enhance
   }
 
-  const prompt = `You are a professional CV writer. Rewrite this professional summary to be more polished, professional, and ATS-friendly.
+  const prompt = `You are a professional CV/resume writer specializing in ATS optimization. Your job is to enhance this professional summary while keeping the jobseeker's original message and intent intact.
 
-RULES:
-- Keep it concise (60-80 words max)
-- Use third person or remove "I" statements
-- Start with the person's role/profession
-- Highlight key skills and experience
-- Make it grammatically perfect
-- Do NOT add fake information or metrics
-- Preserve the original meaning and facts
-- Do NOT include any preamble like "Here is..." - just output the summary directly
+CRITICAL RULES - MUST FOLLOW:
+1. PRESERVE THE JOBSEEKER'S STORY: Keep all the information they want to convey. Don't remove their key points.
+2. FIT THE TARGET ROLE: Align the summary with the "${preferredRole || 'Professional'}" role they're targeting.
+3. ATS OPTIMIZATION: Include industry-specific keywords relevant to "${preferredRole || 'their field'}".
+4. HUMAN WRITING STYLE: Write naturally like a real person, not robotic or AI-generated.
+5. NO EM DASHES: Never use "—" (em dash). Use commas, periods, or "and" instead.
+6. NO FAKE INFO: Don't invent metrics, achievements, or skills not mentioned in the original.
+7. CONCISE: Keep it 60-80 words maximum.
+
+FORMATTING RULES:
+- Start with their profession/role (e.g., "Experienced Product Manager..." or "Detail-oriented Software Engineer...")
+- Remove "I am" statements - use third person or implied first person
+- Use simple punctuation (commas, periods) - NO em dashes or semicolons
+- End with what value they bring or what they're seeking
+
+WRITING STYLE:
+- Sound professional but warm and human
+- Avoid buzzwords like "synergy", "leverage", "spearheaded" unless natural
+- Use active voice
+- Be specific, not generic
 
 CONTEXT:
 - Target Role: ${preferredRole || 'Professional'}
-- Years of Experience: ${yearsExperience || 'Not specified'}
+- Years of Experience: ${yearsExperience > 0 ? yearsExperience + ' years' : 'Entry level/Not specified'}
 
-ORIGINAL SUMMARY:
+ORIGINAL SUMMARY (enhance this while keeping their message):
 ${summary}
 
-REWRITTEN SUMMARY:`;
+OUTPUT (just the enhanced summary, nothing else):`;
 
   try {
     const controller = new AbortController();
@@ -108,7 +119,7 @@ REWRITTEN SUMMARY:`;
       return null;
     }
 
-    const enhancedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    let enhancedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
     if (!enhancedText || enhancedText.length < 20) {
       console.warn('[Gemini] Empty or too short response');
@@ -119,6 +130,25 @@ REWRITTEN SUMMARY:`;
     if (!/[a-zA-Z]{5,}/.test(enhancedText)) {
       console.warn('[Gemini] Response appears invalid');
       return null;
+    }
+
+    // POST-PROCESSING: Clean up the output
+    // 1. Remove em dashes (—) and en dashes (–) - replace with commas or "and"
+    enhancedText = enhancedText
+      .replace(/\s*[—–]\s*/g, ', ') // Replace dashes with comma
+      .replace(/,\s*,/g, ',') // Fix double commas
+      .replace(/,\s*\./g, '.') // Fix comma before period
+      .replace(/\s{2,}/g, ' ') // Fix double spaces
+      .trim();
+
+    // 2. Remove any AI preamble that might have slipped through
+    enhancedText = enhancedText
+      .replace(/^(Here is|Here's|Below is|The enhanced|Enhanced summary:?|Summary:?)\s*/i, '')
+      .trim();
+
+    // 3. Ensure it ends with a period
+    if (enhancedText && !enhancedText.endsWith('.') && !enhancedText.endsWith('!')) {
+      enhancedText += '.';
     }
 
     console.log('[Gemini] Successfully enhanced summary');
