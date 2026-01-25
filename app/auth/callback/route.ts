@@ -8,10 +8,20 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
   const error = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')
+  const type = requestUrl.searchParams.get('type')
+
+  // Check if this is a password recovery flow
+  const isPasswordRecovery = type === 'recovery'
 
   // Handle error from Supabase (e.g., expired or invalid link)
   if (error) {
     const errorMessage = errorDescription || 'confirmation_failed'
+    // For password recovery errors, redirect to forgot-password page
+    if (isPasswordRecovery) {
+      return NextResponse.redirect(
+        new URL(`/forgot-password?error=${encodeURIComponent(errorMessage)}`, requestUrl.origin)
+      )
+    }
     return NextResponse.redirect(
       new URL(`/auth/confirm?error=${encodeURIComponent(errorMessage)}`, requestUrl.origin)
     )
@@ -51,12 +61,25 @@ export async function GET(request: NextRequest) {
 
     if (exchangeError) {
       console.error('[Auth Callback] Exchange error:', exchangeError)
+      // For password recovery errors, redirect to forgot-password page
+      if (isPasswordRecovery) {
+        return NextResponse.redirect(
+          new URL(`/forgot-password?error=${encodeURIComponent(exchangeError.message)}`, requestUrl.origin)
+        )
+      }
       return NextResponse.redirect(
         new URL(`/auth/confirm?error=${encodeURIComponent(exchangeError.message)}`, requestUrl.origin)
       )
     }
 
     if (data.user) {
+      // For password recovery, redirect to reset-password page
+      if (isPasswordRecovery) {
+        return NextResponse.redirect(
+          new URL('/reset-password', requestUrl.origin)
+        )
+      }
+
       // Update email_verified status in public.users table
       await supabase
         .from('users')

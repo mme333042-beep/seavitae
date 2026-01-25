@@ -464,3 +464,62 @@ export function getDashboardPath(role: UserRole): string {
       return '/'
   }
 }
+
+// Request password reset email
+export async function requestPasswordReset(email: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = getSupabaseClient()
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+  })
+
+  if (error) {
+    console.error('[Auth] Password reset request error:', error)
+
+    // Provide user-friendly error messages
+    let errorMessage = error.message
+    if (error.message.toLowerCase().includes('rate') || error.message.toLowerCase().includes('too many')) {
+      errorMessage = 'Please wait a moment before requesting another reset email.'
+    } else if (error.message.toLowerCase().includes('invalid email')) {
+      errorMessage = 'Please enter a valid email address.'
+    }
+
+    return { success: false, error: errorMessage }
+  }
+
+  return { success: true }
+}
+
+// Reset password with new password (after clicking email link)
+export async function resetPassword(newPassword: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = getSupabaseClient()
+
+  // Validate password
+  const passwordValidation = validatePassword(newPassword)
+  if (!passwordValidation.isValid) {
+    return {
+      success: false,
+      error: passwordValidation.errors.join(' '),
+    }
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  })
+
+  if (error) {
+    console.error('[Auth] Password reset error:', error)
+
+    // Provide user-friendly error messages
+    let errorMessage = error.message
+    if (error.message.toLowerCase().includes('same as')) {
+      errorMessage = 'New password must be different from your current password.'
+    } else if (error.message.toLowerCase().includes('weak')) {
+      errorMessage = 'Password is too weak. Please choose a stronger password.'
+    }
+
+    return { success: false, error: errorMessage }
+  }
+
+  return { success: true }
+}

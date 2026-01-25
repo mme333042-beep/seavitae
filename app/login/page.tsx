@@ -92,6 +92,12 @@ function LoginForm() {
               {errors.password && <p role="alert">{errors.password}</p>}
             </div>
 
+            <div style={{ marginBottom: "var(--space-lg)", textAlign: "right" }}>
+              <Link href="/forgot-password" style={{ fontSize: "var(--text-sm)" }}>
+                Forgot password?
+              </Link>
+            </div>
+
             <div>
               <button type="submit" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}
