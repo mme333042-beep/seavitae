@@ -6,6 +6,7 @@
 export interface CVData {
   fullName: string;
   email?: string;
+  phone?: string; // Format: "+234-8087035953"
   city: string;
   preferredRole: string;
   bio: string;
@@ -451,6 +452,11 @@ export function generatePrintableCV(cv: CVData): string {
         ${cv.email ? `
         <span class="contact-item">
           ${cv.email}
+        </span>
+        ` : ''}
+        ${cv.phone ? `
+        <span class="contact-item">
+          ${cv.phone}
         </span>
         ` : ''}
         <span class="contact-item">

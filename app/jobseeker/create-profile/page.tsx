@@ -30,7 +30,33 @@ interface FormValues {
   skills: string;
   yearsExperience: number;
   age: number | null;
+  countryCode: string;
+  phoneNumber: string;
 }
+
+// Common country codes
+const COUNTRY_CODES = [
+  { code: "+234", country: "Nigeria" },
+  { code: "+1", country: "USA/Canada" },
+  { code: "+44", country: "UK" },
+  { code: "+91", country: "India" },
+  { code: "+27", country: "South Africa" },
+  { code: "+254", country: "Kenya" },
+  { code: "+233", country: "Ghana" },
+  { code: "+971", country: "UAE" },
+  { code: "+966", country: "Saudi Arabia" },
+  { code: "+61", country: "Australia" },
+  { code: "+49", country: "Germany" },
+  { code: "+33", country: "France" },
+  { code: "+86", country: "China" },
+  { code: "+81", country: "Japan" },
+  { code: "+82", country: "South Korea" },
+  { code: "+55", country: "Brazil" },
+  { code: "+52", country: "Mexico" },
+  { code: "+20", country: "Egypt" },
+  { code: "+212", country: "Morocco" },
+  { code: "+256", country: "Uganda" },
+];
 
 interface EducationEntry {
   id: string;
@@ -86,6 +112,8 @@ export default function CreateProfilePage() {
     skills: "",
     yearsExperience: 0,
     age: null,
+    countryCode: "+234",
+    phoneNumber: "",
   });
 
   // Form state for sections
@@ -128,6 +156,17 @@ export default function CreateProfilePage() {
         if (profile) {
           setExistingJobseekerId(profile.id);
 
+          // Parse phone number if exists (format: "+234-8087035953")
+          let countryCode = "+234";
+          let phoneNumber = "";
+          if (profile.phone) {
+            const phoneParts = profile.phone.split("-");
+            if (phoneParts.length === 2) {
+              countryCode = phoneParts[0];
+              phoneNumber = phoneParts[1];
+            }
+          }
+
           // Pre-populate form with existing profile data
           setFormValues({
             fullName: profile.full_name || "",
@@ -137,6 +176,8 @@ export default function CreateProfilePage() {
             skills: "",
             yearsExperience: profile.years_experience || 0,
             age: profile.age || null,
+            countryCode,
+            phoneNumber,
           });
 
           // Load CV data
@@ -289,6 +330,10 @@ export default function CreateProfilePage() {
     const yearsExperience = parseInt(formData.get("yearsExperience") as string) || 0;
     const age = parseInt(formData.get("age") as string) || null;
     const skillsText = formData.get("skills") as string;
+    const countryCode = formData.get("countryCode") as string;
+    const phoneNumber = formData.get("phoneNumber") as string;
+    // Format phone: "+234-8087035953"
+    const phone = phoneNumber ? `${countryCode}-${phoneNumber.replace(/^0+/, '')}` : null;
 
     try {
       let jobseekerId = existingJobseekerId;
@@ -372,6 +417,7 @@ export default function CreateProfilePage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            type: 'summary',
             summary: bio, // Send original, let AI enhance from scratch
             preferredRole,
             yearsExperience,
@@ -390,6 +436,37 @@ export default function CreateProfilePage() {
         console.warn('[CV Save] AI enhancement failed, using regex fallback');
       }
 
+      // Try AI enhancement for experience descriptions
+      const enhancedExperiences = [...enhancedCV.experiences];
+      for (let i = 0; i < enhancedExperiences.length; i++) {
+        const exp = enhancedExperiences[i];
+        if (exp.description && exp.description.length > 20) {
+          try {
+            const aiResponse = await fetch('/api/enhance-summary', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'experience',
+                description: exp.description,
+                jobTitle: exp.title,
+                company: exp.company,
+              }),
+            });
+
+            if (aiResponse.ok) {
+              const aiData = await aiResponse.json();
+              if (aiData.enhanced && aiData.method === 'ai') {
+                enhancedExperiences[i] = { ...exp, description: aiData.enhanced };
+                console.log(`[CV Save] Experience ${i + 1} enhanced via AI`);
+              }
+            }
+          } catch (aiError) {
+            // AI failed silently - keep regex-enhanced version
+            console.warn(`[CV Save] Experience ${i + 1} AI enhancement failed`);
+          }
+        }
+      }
+
       // Create or update jobseeker profile with enhanced data
       if (!existingJobseekerId) {
         const result = await createJobseekerProfile(userId, {
@@ -399,6 +476,7 @@ export default function CreateProfilePage() {
           bio: finalSummary,
           years_experience: yearsExperience,
           age,
+          phone,
         });
 
         if (!result.success) {
@@ -424,6 +502,7 @@ export default function CreateProfilePage() {
             bio: finalSummary,
             years_experience: yearsExperience,
             age,
+            phone,
           })
           .eq("id", existingJobseekerId);
       }
@@ -439,7 +518,7 @@ export default function CreateProfilePage() {
       // Email display should be handled at the UI/PDF level, not in content storage
       const sectionsToSave: { type: CVSectionType; content: { items: unknown[] } | { text: string } }[] = [
         { type: "summary", content: { text: finalSummary } },
-        { type: "experience", content: { items: enhancedCV.experiences } },
+        { type: "experience", content: { items: enhancedExperiences } },
         { type: "education", content: { items: enhancedCV.educations } },
         { type: "skills", content: { items: enhancedCV.skills } },
         { type: "languages", content: { items: enhancedCV.languages } },
@@ -504,6 +583,31 @@ export default function CreateProfilePage() {
             <div className="form-group">
               <label htmlFor="city">City *</label>
               <input type="text" id="city" name="city" placeholder="Lagos" required defaultValue={formValues.city} />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="phoneNumber">Phone Number</label>
+              <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+                <select
+                  id="countryCode"
+                  name="countryCode"
+                  defaultValue={formValues.countryCode}
+                  style={{ width: "140px", flexShrink: 0 }}
+                >
+                  {COUNTRY_CODES.map(({ code, country }) => (
+                    <option key={code} value={code}>{code} ({country})</option>
+                  ))}
+                </select>
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  placeholder="8087035953"
+                  defaultValue={formValues.phoneNumber}
+                  style={{ flex: 1 }}
+                />
+              </div>
+              <p className="form-help">Enter your number without the country code (e.g., 8087035953)</p>
             </div>
 
             <div className="form-group">
