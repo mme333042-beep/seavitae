@@ -138,15 +138,15 @@ function ConfirmEmailContent() {
       <section>
         <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
           <div style={{ marginBottom: "var(--space-lg)" }}>
-            <span style={{ fontSize: "3rem" }}>&#10003;</span>
+            <span style={{ fontSize: "3rem", color: "var(--sv-success, #22c55e)" }}>&#10003;</span>
           </div>
-          <h1 style={{ marginBottom: "var(--space-md)" }}>Email Confirmed</h1>
+          <h1 style={{ marginBottom: "var(--space-md)" }}>Email Verified Successfully</h1>
           <p style={{ marginBottom: "var(--space-xl)", color: "var(--sv-muted)" }}>
-            Your email has been confirmed successfully. You can now access your account.
+            Your email address has been verified. Please log in with your email and password to continue.
           </p>
-          <Link href={getRedirectPath()}>
+          <Link href="/login">
             <button type="button" style={{ width: "100%" }}>
-              {getRedirectLabel()}
+              Log In to Your Account
             </button>
           </Link>
         </div>

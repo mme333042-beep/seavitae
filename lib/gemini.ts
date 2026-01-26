@@ -223,7 +223,8 @@ export async function enhanceExperienceWithAI(
 ## FORMAT:
 - Return as bullet points (use • character)
 - Each bullet on new line
-- 3-6 bullets total
+- MAXIMUM 4 bullets total - condense and prioritize the most impactful duties/achievements
+- If the original has more than 4 points, combine related items or keep only the most important
 
 ## CRITICAL RULES:
 - NO FAKE METRICS - only quantify if reasonable
