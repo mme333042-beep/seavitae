@@ -209,11 +209,23 @@ export function generatePrintableCV(cv: CVData): string {
         padding: 20px 30px;
       }
 
+      /* Allow sections to flow across pages */
       .section {
+        page-break-inside: auto;
+      }
+
+      /* Keep individual entries together (single job, education, etc.) */
+      .entry {
         page-break-inside: avoid;
       }
 
+      /* Keep section headers with their content */
       h2 {
+        page-break-after: avoid;
+      }
+
+      /* Prevent orphaned headers at bottom of page */
+      h3 {
         page-break-after: avoid;
       }
     }
