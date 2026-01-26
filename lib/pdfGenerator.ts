@@ -156,12 +156,17 @@ export function generatePrintableCV(cv: CVData): string {
     }
 
     .contact-icon {
-      width: 14px;
-      height: 14px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       color: #6b7280;
+      font-size: 12px;
+    }
+
+    /* Wrapper to keep section title + first item together */
+    .section-header-group {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .header-avatar {
@@ -445,14 +450,9 @@ export function generatePrintableCV(cv: CVData): string {
       <div class="header-contact">
         ${cv.email ? `
         <span class="contact-item">
-          <span class="contact-icon">@</span>
           ${cv.email}
         </span>
         ` : ''}
-        <span class="contact-item">
-          <span class="contact-icon">&#128279;</span>
-          seavitae.com/cv
-        </span>
         <span class="contact-item">
           <span class="contact-icon">&#128205;</span>
           ${cv.city}
@@ -468,16 +468,51 @@ export function generatePrintableCV(cv: CVData): string {
     <div class="left-column">
       ${cv.bio ? `
       <section class="section">
-        <h2 class="section-title">Summary</h2>
-        <p class="summary-text">${cv.bio}</p>
+        <div class="section-header-group">
+          <h2 class="section-title">Summary</h2>
+          <p class="summary-text">${cv.bio}</p>
+        </div>
       </section>
       ` : ''}
 
       ${cv.experience.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">Experience</h2>
-        ${cv.experience.map(exp => {
-          // Parse description into bullet points if it contains them
+        <div class="section-header-group">
+          <h2 class="section-title">Experience</h2>
+          ${(() => {
+            const exp = cv.experience[0];
+            const descLines = exp.description ? exp.description.split(/[•\n]/).filter(line => line.trim()) : [];
+            const hasBullets = descLines.length > 1;
+            return `
+            <div class="entry">
+              <h3 class="entry-title">${exp.title}</h3>
+              <p class="entry-company">${exp.company}</p>
+              <div class="entry-meta">
+                <span class="meta-item">
+                  <span class="meta-icon">&#128197;</span>
+                  ${exp.startDate}${exp.endDate ? ` - ${exp.endDate}` : ' - Present'}
+                </span>
+                ${exp.location ? `
+                <span class="meta-item">
+                  <span class="meta-icon">&#128205;</span>
+                  ${exp.location}
+                </span>
+                ` : ''}
+              </div>
+              ${exp.description ? `
+              <div class="entry-description">
+                ${hasBullets ? `
+                <ul>
+                  ${descLines.map(line => `<li>${line.trim()}</li>`).join('')}
+                </ul>
+                ` : `<p>${exp.description}</p>`}
+              </div>
+              ` : ''}
+            </div>
+            `;
+          })()}
+        </div>
+        ${cv.experience.slice(1).map(exp => {
           const descLines = exp.description ? exp.description.split(/[•\n]/).filter(line => line.trim()) : [];
           const hasBullets = descLines.length > 1;
 
@@ -514,8 +549,26 @@ export function generatePrintableCV(cv: CVData): string {
 
       ${cv.education.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">Education</h2>
-        ${cv.education.map(edu => `
+        <div class="section-header-group">
+          <h2 class="section-title">Education</h2>
+          <div class="entry">
+            <h3 class="entry-title">${cv.education[0].degree}</h3>
+            <p class="entry-company">${cv.education[0].institution}</p>
+            <div class="entry-meta">
+              <span class="meta-item">
+                <span class="meta-icon">&#128197;</span>
+                ${cv.education[0].year}
+              </span>
+              ${cv.education[0].location ? `
+              <span class="meta-item">
+                <span class="meta-icon">&#128205;</span>
+                ${cv.education[0].location}
+              </span>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+        ${cv.education.slice(1).map(edu => `
         <div class="entry">
           <h3 class="entry-title">${edu.degree}</h3>
           <p class="entry-company">${edu.institution}</p>
@@ -542,17 +595,30 @@ export function generatePrintableCV(cv: CVData): string {
     <div class="right-column">
       ${cv.skills.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">Skills</h2>
-        <ul class="skills-list">
-          ${cv.skills.map(skill => `<li class="skill-tag">${skill}</li>`).join('')}
+        <div class="section-header-group">
+          <h2 class="section-title">Skills</h2>
+          <ul class="skills-list">
+            ${cv.skills.slice(0, 3).map(skill => `<li class="skill-tag">${skill}</li>`).join('')}
+          </ul>
+        </div>
+        ${cv.skills.length > 3 ? `
+        <ul class="skills-list" style="margin-top: 6px;">
+          ${cv.skills.slice(3).map(skill => `<li class="skill-tag">${skill}</li>`).join('')}
         </ul>
+        ` : ''}
       </section>
       ` : ''}
 
       ${cv.languages.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">Languages</h2>
-        ${cv.languages.map(lang => `
+        <div class="section-header-group">
+          <h2 class="section-title">Languages</h2>
+          <div class="language-item">
+            <span class="language-name">${cv.languages[0].language}</span>
+            <span class="language-level">${cv.languages[0].proficiency}</span>
+          </div>
+        </div>
+        ${cv.languages.slice(1).map(lang => `
         <div class="language-item">
           <span class="language-name">${lang.language}</span>
           <span class="language-level">${lang.proficiency}</span>
@@ -563,8 +629,14 @@ export function generatePrintableCV(cv: CVData): string {
 
       ${cv.certifications.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">Certifications</h2>
-        ${cv.certifications.map(cert => `
+        <div class="section-header-group">
+          <h2 class="section-title">Certifications</h2>
+          <div class="cert-item">
+            <p class="cert-name">${cv.certifications[0].name}</p>
+            <p class="cert-meta">${cv.certifications[0].issuer} (${cv.certifications[0].year})</p>
+          </div>
+        </div>
+        ${cv.certifications.slice(1).map(cert => `
         <div class="cert-item">
           <p class="cert-name">${cert.name}</p>
           <p class="cert-meta">${cert.issuer} (${cert.year})</p>
@@ -575,8 +647,15 @@ export function generatePrintableCV(cv: CVData): string {
 
       ${cv.projects.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">Projects</h2>
-        ${cv.projects.map(proj => `
+        <div class="section-header-group">
+          <h2 class="section-title">Projects</h2>
+          <div class="project-item">
+            <p class="project-name">${cv.projects[0].name}</p>
+            ${cv.projects[0].description ? `<p class="project-desc">${cv.projects[0].description}</p>` : ''}
+            ${cv.projects[0].link ? `<a href="${cv.projects[0].link}" class="project-link">${cv.projects[0].link}</a>` : ''}
+          </div>
+        </div>
+        ${cv.projects.slice(1).map(proj => `
         <div class="project-item">
           <p class="project-name">${proj.name}</p>
           ${proj.description ? `<p class="project-desc">${proj.description}</p>` : ''}
@@ -588,8 +667,15 @@ export function generatePrintableCV(cv: CVData): string {
 
       ${cv.publications.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">Publications</h2>
-        ${cv.publications.map(pub => `
+        <div class="section-header-group">
+          <h2 class="section-title">Publications</h2>
+          <div class="pub-item">
+            <p class="pub-title">${cv.publications[0].title}</p>
+            <p class="pub-venue">${cv.publications[0].venue}</p>
+            ${cv.publications[0].link ? `<a href="${cv.publications[0].link}" class="project-link">${cv.publications[0].link}</a>` : ''}
+          </div>
+        </div>
+        ${cv.publications.slice(1).map(pub => `
         <div class="pub-item">
           <p class="pub-title">${pub.title}</p>
           <p class="pub-venue">${pub.venue}</p>
