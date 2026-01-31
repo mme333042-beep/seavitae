@@ -157,7 +157,8 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    const role = userData?.role as string | undefined
+    // Use database role, or fallback to metadata if database record is missing
+    const role = (userData?.role || user.user_metadata?.role) as string | undefined
 
     if (role === 'admin') {
       return NextResponse.redirect(new URL('/admin', request.url))
@@ -167,8 +168,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/employer/dashboard', request.url))
     }
 
-    // Default redirect for logged-in users
-    return NextResponse.redirect(new URL('/', request.url))
+    // If no role found at all, let them access the auth route
+    // This allows users with incomplete setup to log in properly
+    // instead of getting stuck in a redirect loop
   }
 
   // Role-based access control for authenticated users (jobseeker/employer only)

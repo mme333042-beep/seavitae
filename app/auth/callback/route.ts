@@ -80,20 +80,31 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      // Update email_verified status in public.users table
+      // Get role from metadata (set during signup)
+      const metadataRole = data.user.user_metadata?.role
+
+      // Ensure user record exists with role and email_verified status
+      // Use upsert to handle both new records and existing records
       await supabase
         .from('users')
-        .update({ email_verified: true })
-        .eq('id', data.user.id)
+        .upsert({
+          id: data.user.id,
+          email: data.user.email,
+          role: metadataRole,
+          email_verified: true,
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false,
+        })
 
-      // Get user role to determine redirect
+      // Get user role from database (now guaranteed to exist)
       const { data: userData } = await supabase
         .from('users')
         .select('role')
         .eq('id', data.user.id)
         .single()
 
-      const role = userData?.role || data.user.user_metadata?.role
+      const role = userData?.role || metadataRole
 
       // Redirect to confirmation success page with role info
       return NextResponse.redirect(
