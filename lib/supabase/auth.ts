@@ -56,9 +56,17 @@ export interface AuthResult {
 export async function resendConfirmationEmail(email: string): Promise<{ success: boolean; error?: string }> {
   const supabase = getSupabaseClient()
 
+  // Get the base URL for redirects
+  const baseUrl = typeof window !== 'undefined'
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_APP_URL || ''
+
   const { error } = await supabase.auth.resend({
     type: 'signup',
     email,
+    options: {
+      emailRedirectTo: `${baseUrl}/auth/callback`,
+    },
   })
 
   if (error) {
@@ -88,12 +96,18 @@ export async function signUp(data: SignUpData): Promise<AuthResult> {
     }
   }
 
+  // Get the base URL for redirects
+  const baseUrl = typeof window !== 'undefined'
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_APP_URL || ''
+
   // Sign up with Supabase Auth
   // Include role and employerType in user metadata for use after email confirmation
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
     options: {
+      emailRedirectTo: `${baseUrl}/auth/callback`,
       data: {
         role: data.role,
         employerType: data.employerType || null,
