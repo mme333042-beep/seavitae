@@ -1,0 +1,21 @@
+{
+  "name": "SeaVitae",
+  "short_name": "SeaVitae",
+  "description": "A sea of careers, searchable. For Employers: Find top talent by searching CVs directly. For Jobseekers: Create your CV and get discovered.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#31439B",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

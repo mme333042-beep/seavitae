@@ -189,3 +189,104 @@ export function getInterviewRequestEmailTemplate(
     `.trim(),
   };
 }
+
+export function getEmployerApprovedEmailTemplate(
+  employerName: string,
+  employerType: 'individual' | 'company'
+): { subject: string; html: string } {
+  const baseUrl = getBaseUrl();
+
+  return {
+    subject: 'Your SeaVitae Account Has Been Approved! 🎉',
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Approved</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #171717; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background-color: #31439B; padding: 20px; border-radius: 8px 8px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 24px;">SeaVitae</h1>
+  </div>
+
+  <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+    <h2 style="color: #000435; margin-top: 0;">Welcome to SeaVitae! 🎉</h2>
+
+    <p>Hi ${employerName},</p>
+
+    <p>Great news! Your employer account has been approved and verified.</p>
+
+    <div style="background-color: #dcfce7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #166534;">
+      <h3 style="margin-top: 0; color: #166534;">You can now:</h3>
+      <ul style="margin: 10px 0; padding-left: 20px;">
+        <li style="margin: 8px 0;">Search and browse CV profiles of talented jobseekers</li>
+        <li style="margin: 8px 0;">Save CVs to your collection for future reference</li>
+        <li style="margin: 8px 0;">Send messages to jobseekers you're interested in</li>
+        <li style="margin: 8px 0;">Request interviews with potential candidates</li>
+      </ul>
+    </div>
+
+    <p>Start discovering top talent today by searching through our sea of careers!</p>
+
+    <a href="${baseUrl}/employer/dashboard" style="display: inline-block; background-color: #31439B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 10px;">Go to Dashboard</a>
+
+    <p style="color: #888888; font-size: 14px; margin-top: 30px;">
+      If you have any questions or need assistance, please don't hesitate to reach out.
+      <br>Thank you for choosing SeaVitae!
+    </p>
+  </div>
+</body>
+</html>
+    `.trim(),
+  };
+}
+
+export function getEmployerRejectedEmailTemplate(
+  employerName: string,
+  rejectionReason: string
+): { subject: string; html: string } {
+  const baseUrl = getBaseUrl();
+
+  return {
+    subject: 'Update on Your SeaVitae Account Application',
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Application Update</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #171717; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background-color: #31439B; padding: 20px; border-radius: 8px 8px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 24px;">SeaVitae</h1>
+  </div>
+
+  <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+    <h2 style="color: #000435; margin-top: 0;">Account Application Update</h2>
+
+    <p>Hi ${employerName},</p>
+
+    <p>Thank you for your interest in SeaVitae. After reviewing your employer account application, we are unable to approve it at this time.</p>
+
+    <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+      <h3 style="margin-top: 0; color: #dc2626;">Reason:</h3>
+      <p style="margin: 0; color: #666666;">${rejectionReason}</p>
+    </div>
+
+    <p>If you believe this decision was made in error or if you have additional information to provide, please contact our support team. We're here to help!</p>
+
+    <a href="${baseUrl}/employer/contact" style="display: inline-block; background-color: #31439B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 10px;">Contact Support</a>
+
+    <p style="color: #888888; font-size: 14px; margin-top: 30px;">
+      We appreciate your understanding.
+      <br>- The SeaVitae Team
+    </p>
+  </div>
+</body>
+</html>
+    `.trim(),
+  };
+}

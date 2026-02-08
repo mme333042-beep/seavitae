@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { sendEmail, getEmployerApprovedEmailTemplate, getEmployerRejectedEmailTemplate } from '@/lib/email'
 
 // Helper to create Supabase client for API routes
 async function createApiSupabaseClient() {
@@ -128,6 +129,57 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'Failed to update employer verification status' },
         { status: 500 }
       )
+    }
+
+    // Send email notification for approval or rejection
+    if (action === 'approve' || action === 'reject') {
+      try {
+        // Fetch employer details and user email
+        const { data: employer } = await supabase
+          .from('employers')
+          .select('user_id, company_name, type')
+          .eq('id', employerId)
+          .single()
+
+        if (employer) {
+          const { data: user } = await supabase
+            .from('users')
+            .select('email')
+            .eq('id', employer.user_id)
+            .single()
+
+          if (user?.email) {
+            const employerName = employer.company_name || 'there'
+
+            if (action === 'approve') {
+              const emailTemplate = getEmployerApprovedEmailTemplate(
+                employerName,
+                employer.type as 'individual' | 'company'
+              )
+              await sendEmail({
+                to: user.email,
+                subject: emailTemplate.subject,
+                html: emailTemplate.html,
+              })
+              console.log('[API Admin] Approval email sent to:', user.email)
+            } else if (action === 'reject') {
+              const emailTemplate = getEmployerRejectedEmailTemplate(
+                employerName,
+                reason
+              )
+              await sendEmail({
+                to: user.email,
+                subject: emailTemplate.subject,
+                html: emailTemplate.html,
+              })
+              console.log('[API Admin] Rejection email sent to:', user.email)
+            }
+          }
+        }
+      } catch (emailError) {
+        // Log error but don't fail the request
+        console.error('[API Admin] Error sending notification email:', emailError)
+      }
     }
 
     return NextResponse.json({ success: true, action })

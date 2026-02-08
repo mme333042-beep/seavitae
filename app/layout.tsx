@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     default: "SeaVitae",
     template: "%s | SeaVitae",
   },
-  description: "A sea of careers, searchable.",
+  description: "A sea of careers, searchable. For Employers: Find top talent by searching CVs directly. For Jobseekers: Create your CV and get discovered.",
   metadataBase: new URL("https://seavitae.com"),
 
   openGraph: {
@@ -41,10 +41,16 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
+
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
