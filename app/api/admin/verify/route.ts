@@ -133,52 +133,83 @@ export async function POST(request: NextRequest) {
 
     // Send email notification for approval or rejection
     if (action === 'approve' || action === 'reject') {
+      console.log('[API Admin] Starting email notification process for action:', action)
       try {
         // Fetch employer details and user email
-        const { data: employer } = await supabase
+        console.log('[API Admin] Fetching employer details for ID:', employerId)
+        const { data: employer, error: employerError } = await supabase
           .from('employers')
           .select('user_id, company_name, type')
           .eq('id', employerId)
           .single()
 
+        if (employerError) {
+          console.error('[API Admin] Error fetching employer:', employerError)
+        }
+
+        console.log('[API Admin] Employer data:', employer)
+
         if (employer) {
-          const { data: user } = await supabase
+          console.log('[API Admin] Fetching user email for user_id:', employer.user_id)
+          const { data: user, error: userError } = await supabase
             .from('users')
             .select('email')
             .eq('id', employer.user_id)
             .single()
 
+          if (userError) {
+            console.error('[API Admin] Error fetching user:', userError)
+          }
+
+          console.log('[API Admin] User data:', { email: user?.email })
+
           if (user?.email) {
             const employerName = employer.company_name || 'there'
+            console.log('[API Admin] Sending email to:', user.email)
 
             if (action === 'approve') {
               const emailTemplate = getEmployerApprovedEmailTemplate(
                 employerName,
                 employer.type as 'individual' | 'company'
               )
-              await sendEmail({
+              const emailResult = await sendEmail({
                 to: user.email,
                 subject: emailTemplate.subject,
                 html: emailTemplate.html,
               })
-              console.log('[API Admin] Approval email sent to:', user.email)
+              console.log('[API Admin] Email send result:', emailResult)
+              if (emailResult.success) {
+                console.log('[API Admin] ✅ Approval email sent successfully to:', user.email)
+              } else {
+                console.error('[API Admin] ❌ Approval email failed:', emailResult.error)
+              }
             } else if (action === 'reject') {
               const emailTemplate = getEmployerRejectedEmailTemplate(
                 employerName,
                 reason
               )
-              await sendEmail({
+              const emailResult = await sendEmail({
                 to: user.email,
                 subject: emailTemplate.subject,
                 html: emailTemplate.html,
               })
-              console.log('[API Admin] Rejection email sent to:', user.email)
+              console.log('[API Admin] Email send result:', emailResult)
+              if (emailResult.success) {
+                console.log('[API Admin] ✅ Rejection email sent successfully to:', user.email)
+              } else {
+                console.error('[API Admin] ❌ Rejection email failed:', emailResult.error)
+              }
             }
+          } else {
+            console.error('[API Admin] ❌ No email found for user')
           }
+        } else {
+          console.error('[API Admin] ❌ No employer data found')
         }
       } catch (emailError) {
         // Log error but don't fail the request
-        console.error('[API Admin] Error sending notification email:', emailError)
+        console.error('[API Admin] ❌ Exception sending notification email:', emailError)
+        console.error('[API Admin] Error stack:', emailError instanceof Error ? emailError.stack : 'No stack trace')
       }
     }
 
