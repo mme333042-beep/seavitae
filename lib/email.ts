@@ -230,7 +230,7 @@ export function getEmployerApprovedEmailTemplate(
 
     <p>Start discovering top talent today by searching through our sea of careers!</p>
 
-    <a href="${baseUrl}/employer/dashboard" style="display: inline-block; background-color: #31439B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 10px;">Go to Dashboard</a>
+    <a href="https://www.seavitae.com/login" style="display: inline-block; background-color: #31439B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 10px;">Go to Dashboard</a>
 
     <p style="color: #888888; font-size: 14px; margin-top: 30px;">
       If you have any questions or need assistance, please don't hesitate to reach out.
@@ -278,7 +278,7 @@ export function getEmployerRejectedEmailTemplate(
 
     <p>If you believe this decision was made in error or if you have additional information to provide, please contact our support team. We're here to help!</p>
 
-    <a href="${baseUrl}/employer/contact" style="display: inline-block; background-color: #31439B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 10px;">Contact Support</a>
+    <a href="https://www.linkedin.com/company/seavitae/" style="display: inline-block; background-color: #31439B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 10px;">Contact Support</a>
 
     <p style="color: #888888; font-size: 14px; margin-top: 30px;">
       We appreciate your understanding.
