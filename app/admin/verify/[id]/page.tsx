@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import {
-  getEmployerForReview,
-  approveEmployer,
-  rejectEmployer,
-  resetEmployerVerification,
-} from "@/lib/supabase/admin";
+import { getEmployerForReview } from "@/lib/supabase/admin";
 import type { Employer, VerificationStatus } from "@/lib/supabase/types";
 
 interface EmployerWithEmail extends Employer {
@@ -59,19 +54,34 @@ export default function VerifyEmployerPage() {
     setActionLoading(true);
     setError(null);
 
-    const result = await approveEmployer(employer.id);
+    try {
+      const response = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employerId: employer.id,
+          action: 'approve',
+        }),
+      });
 
-    if (!result.success) {
-      setError(result.error || "Failed to approve employer.");
+      const result = await response.json();
+
+      if (!result.success) {
+        setError(result.error || "Failed to approve employer.");
+        setActionLoading(false);
+        return;
+      }
+
+      setSuccessMessage("Employer approved successfully! Approval email sent.");
+      // Refresh employer data
+      const updated = await getEmployerForReview(employerId);
+      if (updated) setEmployer(updated);
       setActionLoading(false);
-      return;
+    } catch (err) {
+      console.error('[Admin] Error approving employer:', err);
+      setError("Failed to approve employer.");
+      setActionLoading(false);
     }
-
-    setSuccessMessage("Employer approved successfully!");
-    // Refresh employer data
-    const updated = await getEmployerForReview(employerId);
-    if (updated) setEmployer(updated);
-    setActionLoading(false);
   }
 
   async function handleReject() {
@@ -85,21 +95,37 @@ export default function VerifyEmployerPage() {
     setActionLoading(true);
     setError(null);
 
-    const result = await rejectEmployer(employer.id, rejectReason);
+    try {
+      const response = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employerId: employer.id,
+          action: 'reject',
+          reason: rejectReason,
+        }),
+      });
 
-    if (!result.success) {
-      setError(result.error || "Failed to reject employer.");
+      const result = await response.json();
+
+      if (!result.success) {
+        setError(result.error || "Failed to reject employer.");
+        setActionLoading(false);
+        return;
+      }
+
+      setSuccessMessage("Employer rejected. Rejection email sent.");
+      setShowRejectForm(false);
+      setRejectReason("");
+      // Refresh employer data
+      const updated = await getEmployerForReview(employerId);
+      if (updated) setEmployer(updated);
       setActionLoading(false);
-      return;
+    } catch (err) {
+      console.error('[Admin] Error rejecting employer:', err);
+      setError("Failed to reject employer.");
+      setActionLoading(false);
     }
-
-    setSuccessMessage("Employer rejected.");
-    setShowRejectForm(false);
-    setRejectReason("");
-    // Refresh employer data
-    const updated = await getEmployerForReview(employerId);
-    if (updated) setEmployer(updated);
-    setActionLoading(false);
   }
 
   async function handleReset() {
@@ -108,19 +134,34 @@ export default function VerifyEmployerPage() {
     setActionLoading(true);
     setError(null);
 
-    const result = await resetEmployerVerification(employer.id);
+    try {
+      const response = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employerId: employer.id,
+          action: 'reset',
+        }),
+      });
 
-    if (!result.success) {
-      setError(result.error || "Failed to reset verification status.");
+      const result = await response.json();
+
+      if (!result.success) {
+        setError(result.error || "Failed to reset verification status.");
+        setActionLoading(false);
+        return;
+      }
+
+      setSuccessMessage("Verification status reset to pending.");
+      // Refresh employer data
+      const updated = await getEmployerForReview(employerId);
+      if (updated) setEmployer(updated);
       setActionLoading(false);
-      return;
+    } catch (err) {
+      console.error('[Admin] Error resetting verification:', err);
+      setError("Failed to reset verification status.");
+      setActionLoading(false);
     }
-
-    setSuccessMessage("Verification status reset to pending.");
-    // Refresh employer data
-    const updated = await getEmployerForReview(employerId);
-    if (updated) setEmployer(updated);
-    setActionLoading(false);
   }
 
   function getStatusBadge(status: VerificationStatus) {
