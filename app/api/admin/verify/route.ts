@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         console.log('[API Admin] Fetching employer details for ID:', employerId)
         const { data: employer, error: employerError } = await supabase
           .from('employers')
-          .select('user_id, company_name, type')
+          .select('user_id, company_name, employer_type')
           .eq('id', employerId)
           .single()
 
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
             if (action === 'approve') {
               const emailTemplate = getEmployerApprovedEmailTemplate(
                 employerName,
-                employer.type as 'individual' | 'company'
+                employer.employer_type as 'individual' | 'company'
               )
               const emailResult = await sendEmail({
                 to: user.email,
