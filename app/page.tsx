@@ -48,7 +48,7 @@ export default function Home() {
 
           <div className="hero-cta">
             <Link href="/employer">I&apos;m Hiring</Link>
-            <Link href="/jobseeker">Be Discovered</Link>
+            <Link href="/jobseeker">Create CV</Link>
           </div>
         </section>
 
@@ -169,7 +169,7 @@ export default function Home() {
           <p>Create your CV or start searching for talent.</p>
           <div className="cta-buttons">
             <Link href="/employer">I&apos;m Hiring</Link>
-            <Link href="/jobseeker">Be Discovered</Link>
+            <Link href="/jobseeker">Create CV</Link>
           </div>
         </section>
       </main>
