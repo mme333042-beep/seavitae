@@ -109,6 +109,10 @@ export default function WhatATSReallyScansForPage() {
             to you and they are missing, add them.
           </p>
 
+          <p style={{ borderLeft: "3px solid #2563eb", paddingLeft: "1rem", color: "#1e40af" }}>
+            Want a CV that passes every ATS automatically? <Link href="/jobseeker/signup"><strong>Create your free ATS-friendly CV on SeaVitae →</strong></Link>
+          </p>
+
           <h2>2. Standard Section Headings</h2>
 
           <p>
@@ -201,6 +205,10 @@ export default function WhatATSReallyScansForPage() {
             Pick one format and use it throughout. &quot;Month Year — Month
             Year&quot; is the most reliably parsed format across different ATS
             systems.
+          </p>
+
+          <p style={{ borderLeft: "3px solid #2563eb", paddingLeft: "1rem", color: "#1e40af" }}>
+            You can create your ATS-friendly CV here — structured, clean, and free. <Link href="/ats-friendly-cv"><strong>See how SeaVitae builds ATS-ready CVs →</strong></Link>
           </p>
 
           <h2>What ATS Cannot See</h2>

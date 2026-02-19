@@ -141,6 +141,10 @@ export default function CVMistakesToAvoidPage() {
             in, and what value you bring. Three to four sentences is ideal.
           </p>
 
+          <p style={{ borderLeft: "3px solid #2563eb", paddingLeft: "1rem", color: "#1e40af" }}>
+            Avoid all of these mistakes from the start. <Link href="/jobseeker/signup"><strong>Build your CV now on SeaVitae — it&apos;s free →</strong></Link>
+          </p>
+
           <h2>Mistake 5: Listing Skills Without Evidence</h2>
 
           <p>
@@ -204,6 +208,10 @@ export default function CVMistakesToAvoidPage() {
             a trusted colleague or friend to review it. Do not rely on
             spellcheck alone — it will not catch words that are spelled correctly
             but used incorrectly.
+          </p>
+
+          <p style={{ borderLeft: "3px solid #2563eb", paddingLeft: "1rem", color: "#1e40af" }}>
+            You can create your professional CV on SeaVitae — structured correctly from the first section. <Link href="/create-cv-for-free"><strong>Create your free CV here →</strong></Link>
           </p>
 
           <h2>Mistake 9: Contact Details in the Header or Footer</h2>

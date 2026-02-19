@@ -111,6 +111,10 @@ export default function WhyCVNotGettingInterviewsPage() {
             the type of role you are targeting. Two to four sentences is enough.
           </p>
 
+          <p style={{ borderLeft: "3px solid #2563eb", paddingLeft: "1rem", color: "#1e40af" }}>
+            Ready to fix your CV? <Link href="/jobseeker/signup"><strong>Create your ATS-friendly CV on SeaVitae for free →</strong></Link>
+          </p>
+
           <h2>3. You Are Not Tailoring Your CV</h2>
 
           <p>
@@ -219,6 +223,10 @@ export default function WhyCVNotGettingInterviewsPage() {
             are realistic. Apply to roles where you meet at least 70–80% of the
             listed requirements. Spend more time on fewer, better-targeted
             applications rather than mass-applying with a generic CV.
+          </p>
+
+          <p style={{ borderLeft: "3px solid #2563eb", paddingLeft: "1rem", color: "#1e40af" }}>
+            SeaVitae&apos;s free CV builder structures every section correctly from the start. <Link href="/create-cv-for-free"><strong>Build your professional CV now →</strong></Link>
           </p>
 
           <h2>8. Your CV Has Formatting or Grammar Errors</h2>
