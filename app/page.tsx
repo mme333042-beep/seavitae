@@ -38,7 +38,7 @@ export default function Home() {
       <main>
         {/* Hero Section */}
         <section id="hero">
-          <h1>SeaVitae</h1>
+          <h1>Create an ATS-Friendly CV Online</h1>
           <p className="tagline">A sea of careers, searchable.</p>
 
           <div className="hero-descriptions">
