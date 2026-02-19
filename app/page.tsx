@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "Create an ATS-Friendly CV Online | SeaVitae",
+  description: "Build a professional, ATS-friendly CV online for free. Get discovered by top employers in Nigeria. SeaVitae — a sea of careers, searchable.",
+};
 
 export default function Home() {
   return (
