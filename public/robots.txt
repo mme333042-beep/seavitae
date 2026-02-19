@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://seavitae.com/sitemap.xml
