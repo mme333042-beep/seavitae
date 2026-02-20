@@ -5,8 +5,8 @@
  * Designed with graceful fallback - returns null on any failure.
  */
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-const TIMEOUT_MS = 10000; // 10 second timeout
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const TIMEOUT_MS = 20000; // 20 second timeout
 
 interface GeminiResponse {
   candidates?: {

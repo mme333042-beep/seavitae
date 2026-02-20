@@ -74,14 +74,6 @@ function getInitials(fullName: string): string {
  * Generate printable HTML for CV - Two Column Modern Design
  */
 export function generatePrintableCV(cv: CVData): string {
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   const initials = getInitials(cv.fullName);
 
   // Check if right column has content
@@ -386,29 +378,11 @@ export function generatePrintableCV(cv: CVData): string {
       font-style: italic;
     }
 
-    /* Footer */
-    .footer {
-      margin-top: 24px;
-      padding-top: 12px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: #9ca3af;
-      font-size: 8pt;
-    }
-
-    .footer-brand {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .footer-brand strong {
-      color: #6b7280;
-    }
-
     /* Print Styles */
+    @page {
+      margin: 0;
+    }
+
     @media print {
       body {
         padding: 20px 25px;
@@ -693,12 +667,6 @@ export function generatePrintableCV(cv: CVData): string {
     </div>
     ` : ''}
   </div>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <span>Last updated: ${formatDate(cv.lastUpdated)}</span>
-    <span class="footer-brand">Generated via <strong>SeaVitae</strong></span>
-  </footer>
 </body>
 </html>
   `.trim();
