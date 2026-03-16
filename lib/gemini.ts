@@ -5,7 +5,7 @@
  * Designed with graceful fallback - returns null on any failure.
  */
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent';
 const TIMEOUT_MS = 20000; // 20 second timeout
 
 interface GeminiResponse {
@@ -25,7 +25,7 @@ interface GeminiResponse {
 /**
  * Call Gemini API with a prompt
  */
-async function callGemini(prompt: string, maxTokens: number = 300): Promise<string | null> {
+async function callGemini(prompt: string, maxTokens: number = 2000): Promise<string | null> {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -171,7 +171,7 @@ ${summary}
 
 ## OUTPUT (just the enhanced summary, nothing else):`;
 
-  const result = await callGemini(prompt, 200);
+  const result = await callGemini(prompt, 2000);
 
   if (!result) return null;
 
@@ -240,7 +240,7 @@ ${description}
 
 ## OUTPUT (bullet points only, nothing else):`;
 
-  const result = await callGemini(prompt, 400);
+  const result = await callGemini(prompt, 3000);
 
   if (!result) return null;
 
@@ -273,7 +273,7 @@ ${skills.join(', ')}
 
 ## OUTPUT (comma-separated list of cleaned skills, nothing else):`;
 
-  const result = await callGemini(prompt, 200);
+  const result = await callGemini(prompt, 2000);
 
   if (!result) return null;
 
