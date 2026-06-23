@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useCallback, useRef } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { signOut } from "@/lib/supabase/auth"
+import { getSession, signOut } from "@/lib/supabase/auth"
 
 const INACTIVITY_TIMEOUT = 15 * 60 * 1000 // 15 minutes in milliseconds
 const ACTIVITY_CHECK_INTERVAL = 60 * 1000 // Check every minute
@@ -12,57 +12,61 @@ interface InactivityTrackerProps {
   children: React.ReactNode
 }
 
+/**
+ * Logs a signed-in user out after 15 minutes of inactivity.
+ *
+ * Crucially, it also logs out a *stale* session on load: if the last recorded
+ * activity was more than 15 minutes ago (e.g. the tab/app was reopened a day
+ * later), the cached session is cleared and the user is sent to /login. This
+ * runs globally (mounted in the root layout) but is a no-op for logged-out
+ * visitors, so public pages are never redirected.
+ */
 export function InactivityTracker({ children }: InactivityTrackerProps) {
   const router = useRouter()
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  const handleLogout = useCallback(async () => {
-    // Clear the activity tracking
-    localStorage.removeItem(LAST_ACTIVITY_KEY)
-
-    // Sign out
-    await signOut()
-
-    // Redirect to login page
-    router.push("/login?reason=inactivity")
-  }, [router])
-
-  const updateLastActivity = useCallback(() => {
-    const now = Date.now()
-    localStorage.setItem(LAST_ACTIVITY_KEY, now.toString())
-  }, [])
-
-  const resetTimer = useCallback(() => {
-    // Update last activity timestamp
-    updateLastActivity()
-
-    // Clear existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-
-    // Set new timeout
-    timeoutRef.current = setTimeout(() => {
-      handleLogout()
-    }, INACTIVITY_TIMEOUT)
-  }, [handleLogout, updateLastActivity])
-
-  const checkInactivity = useCallback(() => {
-    const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY)
-    if (lastActivity) {
-      const elapsed = Date.now() - parseInt(lastActivity, 10)
-      if (elapsed >= INACTIVITY_TIMEOUT) {
-        handleLogout()
-      }
-    }
-  }, [handleLogout])
 
   useEffect(() => {
-    // Initialize last activity on mount
-    updateLastActivity()
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+    let intervalId: ReturnType<typeof setInterval> | null = null
+    let throttleStamp = 0
+    let cancelled = false
 
-    // Set up activity listeners
+    const logout = async () => {
+      localStorage.removeItem(LAST_ACTIVITY_KEY)
+      await signOut()
+      router.push("/login?reason=inactivity")
+    }
+
+    const markActivity = () => {
+      localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString())
+    }
+
+    const isStale = () => {
+      const last = localStorage.getItem(LAST_ACTIVITY_KEY)
+      if (!last) return false
+      return Date.now() - parseInt(last, 10) >= INACTIVITY_TIMEOUT
+    }
+
+    const resetTimer = () => {
+      markActivity()
+      if (timeoutId) clearTimeout(timeoutId)
+      timeoutId = setTimeout(logout, INACTIVITY_TIMEOUT)
+    }
+
+    // Throttle so we don't write to localStorage on every mouse move.
+    const onActivity = () => {
+      const now = Date.now()
+      if (now - throttleStamp > 5000) {
+        throttleStamp = now
+        resetTimer()
+      }
+    }
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && isStale()) {
+        logout()
+      }
+    }
+
     const activityEvents = [
       "mousedown",
       "mousemove",
@@ -72,52 +76,40 @@ export function InactivityTracker({ children }: InactivityTrackerProps) {
       "click",
     ]
 
-    // Throttle activity updates to avoid excessive localStorage writes
-    let lastUpdate = 0
-    const throttledResetTimer = () => {
-      const now = Date.now()
-      if (now - lastUpdate > 5000) {
-        // Only update every 5 seconds
-        lastUpdate = now
-        resetTimer()
+    async function init() {
+      // Only track signed-in users; never redirect anonymous visitors.
+      const session = await getSession()
+      if (cancelled || !session) return
+
+      // If the user has been away longer than the timeout, log out immediately
+      // regardless of any cached session on the device.
+      if (isStale()) {
+        logout()
+        return
       }
+
+      resetTimer()
+      activityEvents.forEach((event) =>
+        window.addEventListener(event, onActivity, { passive: true })
+      )
+      intervalId = setInterval(() => {
+        if (isStale()) logout()
+      }, ACTIVITY_CHECK_INTERVAL)
+      document.addEventListener("visibilitychange", onVisible)
     }
 
-    activityEvents.forEach((event) => {
-      window.addEventListener(event, throttledResetTimer, { passive: true })
-    })
+    init()
 
-    // Initial timer
-    resetTimer()
-
-    // Set up periodic check for inactivity (handles tab switches, sleep, etc.)
-    checkIntervalRef.current = setInterval(checkInactivity, ACTIVITY_CHECK_INTERVAL)
-
-    // Check on visibility change (when user returns to tab)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        checkInactivity()
-      }
-    }
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-
-    // Cleanup
     return () => {
-      activityEvents.forEach((event) => {
-        window.removeEventListener(event, throttledResetTimer)
-      })
-
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current)
-      }
-
-      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      cancelled = true
+      if (timeoutId) clearTimeout(timeoutId)
+      if (intervalId) clearInterval(intervalId)
+      activityEvents.forEach((event) =>
+        window.removeEventListener(event, onActivity)
+      )
+      document.removeEventListener("visibilitychange", onVisible)
     }
-  }, [resetTimer, checkInactivity, updateLastActivity])
+  }, [router])
 
   return <>{children}</>
 }

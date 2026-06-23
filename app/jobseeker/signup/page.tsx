@@ -288,8 +288,8 @@ export default function JobseekerSignupPage() {
   return (
     <main>
       <header>
-        <h1>Create Your Jobseeker Account</h1>
-        <p>Sign up to create your CV and get discovered by employers.</p>
+        <h1>Create Your Account</h1>
+        <p>Sign up to create a professional, ATS-friendly CV in minutes.</p>
       </header>
 
       <section>
@@ -429,9 +429,6 @@ export default function JobseekerSignupPage() {
         <div style={{ marginTop: "var(--space-xl)", textAlign: "center" }}>
           <p>
             Already have an account? <Link href="/login">Login</Link>
-          </p>
-          <p style={{ marginTop: "var(--space-md)" }}>
-            Looking to hire? <Link href="/employer">Sign up as Employer</Link>
           </p>
         </div>
       </section>

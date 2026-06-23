@@ -21,7 +21,7 @@ export default function ATSFriendlyCVPage() {
         <section className="about-content">
           <p>
             Most CVs never get read by a human. Before a recruiter sees your
-            application, it is processed by an Applicant Tracking System — a
+            application, it is processed by an Applicant Tracking System - a
             piece of software that scans, scores, and filters CVs automatically.
             If your CV is not ATS-friendly, it gets rejected before anyone has a
             chance to see your qualifications.
@@ -45,7 +45,7 @@ export default function ATSFriendlyCVPage() {
           <p>
             If your CV uses unusual fonts, complex tables, graphics, or
             non-standard section headings, the ATS may fail to read it correctly.
-            Your experience, skills, and qualifications could be lost entirely —
+            Your experience, skills, and qualifications could be lost entirely -
             not because you are unqualified, but because your CV was not
             formatted correctly.
           </p>
@@ -65,7 +65,7 @@ export default function ATSFriendlyCVPage() {
 
           <p>
             <strong>Clean, structured sections.</strong> Your CV is organised
-            into standard, clearly labelled sections — Work Experience,
+            into standard, clearly labelled sections - Work Experience,
             Education, Skills, Certifications, Languages, Projects, and
             Publications. These are the exact section names that ATS software
             looks for.
@@ -103,7 +103,7 @@ export default function ATSFriendlyCVPage() {
             <strong>Use keywords from the job description.</strong> Read the job
             description carefully and include the exact phrases and skills the
             employer has listed. If they say &quot;project management,&quot; use
-            that exact phrase — not &quot;managing projects.&quot;
+            that exact phrase - not &quot;managing projects.&quot;
           </p>
 
           <p>
@@ -122,8 +122,8 @@ export default function ATSFriendlyCVPage() {
 
           <p>
             <strong>Use standard job titles.</strong> If your actual job title
-            was unconventional — like &quot;People Experience Lead&quot; instead
-            of &quot;HR Manager&quot; — consider listing the more widely
+            was unconventional - like &quot;People Experience Lead&quot; instead
+            of &quot;HR Manager&quot; - consider listing the more widely
             recognised equivalent so the ATS can match it correctly.
           </p>
 
@@ -164,7 +164,7 @@ export default function ATSFriendlyCVPage() {
 
           <p>
             When you create your CV on SeaVitae, every section is structured the
-            way applicant tracking systems expect — so your experience, skills,
+            way applicant tracking systems expect - so your experience, skills,
             and qualifications are parsed correctly every time, not lost to bad
             formatting.
           </p>
@@ -180,7 +180,7 @@ export default function ATSFriendlyCVPage() {
           <p>
             You do not need to hire a professional CV writer or pay for an
             expensive service. SeaVitae gives you everything you need to create
-            a powerful, ATS-friendly CV online — completely free.
+            a powerful, ATS-friendly CV online - completely free.
           </p>
 
           <p>
@@ -194,7 +194,7 @@ export default function ATSFriendlyCVPage() {
           <h2>Build Your ATS-Friendly CV</h2>
           <p>Free, structured, and built to beat the bots.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker">Create My Free CV</Link>
+            <Link href="/jobseeker/signup">Create My Free CV</Link>
           </div>
         </section>
       </main>

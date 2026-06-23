@@ -13,12 +13,12 @@ const posts = [
     slug: "why-your-cv-is-not-getting-interviews",
     title: "Why Your CV Is Not Getting You Interviews (And How to Fix It)",
     excerpt:
-      "You have applied to dozens of jobs and heard nothing back. The problem is almost always your CV. Here is exactly why — and what to do about it.",
+      "You have applied to dozens of jobs and heard nothing back. The problem is almost always your CV. Here is exactly why - and what to do about it.",
     date: "February 19, 2026",
   },
   {
     slug: "what-ats-really-scans-for",
-    title: "What ATS Really Scans For — And How to Make Yours Pass",
+    title: "What ATS Really Scans For - And How to Make Yours Pass",
     excerpt:
       "Most CVs are rejected before a human ever reads them. Applicant Tracking Systems filter out hundreds of candidates automatically. Here is how to make sure yours gets through.",
     date: "February 19, 2026",
@@ -66,7 +66,7 @@ export default function BlogPage() {
           <h2>Ready to Build Your CV?</h2>
           <p>Put the advice into action. Create your free ATS-friendly CV on SeaVitae.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker">Create My Free CV</Link>
+            <Link href="/jobseeker/signup">Create My Free CV</Link>
           </div>
         </section>
       </main>

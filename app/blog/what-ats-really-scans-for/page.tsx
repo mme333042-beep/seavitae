@@ -4,7 +4,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "What ATS Really Scans For — How to Make Your CV Pass | SeaVitae Blog",
+  title: "What ATS Really Scans For - How to Make Your CV Pass | SeaVitae Blog",
   description: "Most CVs are rejected before a human reads them. Learn exactly what Applicant Tracking Systems look for and how to make your CV pass every time.",
 };
 
@@ -15,7 +15,7 @@ export default function WhatATSReallyScansForPage() {
 
       <main>
         <header>
-          <h1>What ATS Really Scans For — And How to Make Yours Pass</h1>
+          <h1>What ATS Really Scans For - And How to Make Yours Pass</h1>
         </header>
 
         <section className="about-content">
@@ -23,7 +23,7 @@ export default function WhatATSReallyScansForPage() {
 
           <p>
             You spent time on your CV. You are qualified for the role. You hit
-            submit — and then nothing. No email, no call, not even an automated
+            submit - and then nothing. No email, no call, not even an automated
             rejection for weeks.
           </p>
 
@@ -36,7 +36,7 @@ export default function WhatATSReallyScansForPage() {
           <p>
             Understanding how Applicant Tracking Systems work is no longer
             optional for serious job seekers. It is essential. Here is a clear,
-            honest breakdown of what these systems actually scan for — and how to
+            honest breakdown of what these systems actually scan for - and how to
             make sure your CV passes.
           </p>
 
@@ -45,7 +45,7 @@ export default function WhatATSReallyScansForPage() {
           <p>
             An Applicant Tracking System is software that companies use to
             receive, sort, and filter job applications. When you apply for a role
-            online, your CV goes directly into the ATS — not into a recruiter&apos;s
+            online, your CV goes directly into the ATS - not into a recruiter&apos;s
             inbox.
           </p>
 
@@ -99,7 +99,7 @@ export default function WhatATSReallyScansForPage() {
             &quot;Skills,&quot; &quot;Certifications.&quot; When you use
             creative section titles like &quot;My Journey&quot; or &quot;What I
             Bring,&quot; the ATS often cannot categorise that content correctly
-            — and your experience ends up unread.
+            - and your experience ends up unread.
           </p>
 
           <p>
@@ -130,7 +130,7 @@ export default function WhatATSReallyScansForPage() {
             Most ATS systems accept PDF and Word documents (.docx). However, some
             older ATS platforms parse Word documents more reliably than PDFs.
             Unless the job posting specifies a format, a standard PDF is usually
-            the right choice — provided it is a text-based PDF, not a scanned
+            the right choice - provided it is a text-based PDF, not a scanned
             image.
           </p>
 
@@ -145,7 +145,7 @@ export default function WhatATSReallyScansForPage() {
           <p>
             Some ATS systems skip over headers and footers entirely when parsing
             a document. If your name, email, and phone number are placed in the
-            document header — as many CV templates put them — the ATS may not
+            document header - as many CV templates put them - the ATS may not
             capture your contact details at all.
           </p>
 
@@ -164,7 +164,7 @@ export default function WhatATSReallyScansForPage() {
           </p>
 
           <p>
-            You do not need to misrepresent your role. You can include both — for
+            You do not need to misrepresent your role. You can include both - for
             example: &quot;Customer Service Representative (Customer Happiness
             Specialist).&quot; This ensures you appear in searches while
             remaining honest.
@@ -175,18 +175,18 @@ export default function WhatATSReallyScansForPage() {
           <p>
             ATS systems use your employment dates to calculate total years of
             experience and to understand career progression. If your dates are
-            inconsistent — some in MM/YYYY format, others written out, some with
-            only a year — the ATS may misread your career timeline.
+            inconsistent - some in MM/YYYY format, others written out, some with
+            only a year - the ATS may misread your career timeline.
           </p>
 
           <p>
-            Pick one format and use it throughout. &quot;Month Year — Month
+            Pick one format and use it throughout. &quot;Month Year - Month
             Year&quot; is the most reliably parsed format across different ATS
             systems.
           </p>
 
           <p style={{ borderLeft: "3px solid #2563eb", paddingLeft: "1rem", color: "#1e40af" }}>
-            You can create your ATS-friendly CV here — structured, clean, and free. <Link href="/ats-friendly-cv"><strong>See how SeaVitae builds ATS-ready CVs →</strong></Link>
+            You can create your ATS-friendly CV here - structured, clean, and free. <Link href="/ats-friendly-cv"><strong>See how SeaVitae builds ATS-ready CVs →</strong></Link>
           </p>
 
           <h2>What ATS Cannot See</h2>
@@ -198,7 +198,7 @@ export default function WhatATSReallyScansForPage() {
           </p>
 
           <p>
-            This means passing the ATS filter is just the first step — not the
+            This means passing the ATS filter is just the first step - not the
             whole game. Once your CV reaches a human reviewer, it still needs to
             be compelling, clear, and well-written. An ATS-friendly CV that is
             also poorly written will be discarded just as quickly.
@@ -209,7 +209,7 @@ export default function WhatATSReallyScansForPage() {
           <p>
             SeaVitae&apos;s{" "}
             <Link href="/create-cv-for-free">free CV builder</Link> structures
-            your CV using exactly the format that ATS systems read correctly —
+            your CV using exactly the format that ATS systems read correctly -
             clean sections, standard headings, no tables or graphics. Your
             downloadable CV is a proper text-based PDF that any ATS can parse
             without errors.
@@ -218,7 +218,7 @@ export default function WhatATSReallyScansForPage() {
           <p>
             Beyond that, SeaVitae takes a fundamentally different approach to job
             searching. On our platform, employers search and discover professional
-            profiles directly — there is no ATS filter between your CV and the
+            profiles directly - there is no ATS filter between your CV and the
             people making hiring decisions. Your profile is visible as soon as
             you turn on your visibility.
           </p>
@@ -239,7 +239,7 @@ export default function WhatATSReallyScansForPage() {
           <h2>The Bottom Line</h2>
 
           <p>
-            The ATS is not your enemy — it is just a tool that rewards
+            The ATS is not your enemy - it is just a tool that rewards
             preparation. Candidates who understand how it works and format their
             CVs accordingly consistently outperform those who do not, even when
             qualifications are similar.
@@ -256,7 +256,7 @@ export default function WhatATSReallyScansForPage() {
         <section id="cta">
           <h2>Build a CV That Passes Every ATS</h2>
           <p>
-            SeaVitae structures your CV correctly from the start — free, clean,
+            SeaVitae structures your CV correctly from the start - free, clean,
             and ATS-ready.
           </p>
           <div className="cta-buttons">

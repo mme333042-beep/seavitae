@@ -25,7 +25,7 @@ export default function Home() {
           </p>
 
           <div className="hero-cta">
-            <Link href="/jobseeker">Create My CV — Free</Link>
+            <Link href="/jobseeker/signup">Create My CV for Free</Link>
           </div>
 
           <p className="hero-note">No account fees. No design skills needed.</p>
@@ -109,7 +109,7 @@ export default function Home() {
           <h2>Ready to build your CV?</h2>
           <p>Create a professional, ATS-friendly CV in minutes.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker">Create My CV</Link>
+            <Link href="/jobseeker/signup">Create My CV</Link>
           </div>
         </section>
       </main>

@@ -274,17 +274,14 @@ export async function signIn(data: SignInData): Promise<SignInResult> {
     // Silently handle any errors
   }
 
-  const employerType = authData.user.user_metadata?.employerType as EmployerType | undefined
-
-  return await determineRedirectPath(supabase, authData.user.id, role, employerType)
+  return await determineRedirectPath(supabase, authData.user.id, role)
 }
 
 // Helper function to determine redirect path after login
 async function determineRedirectPath(
   supabase: ReturnType<typeof getSupabaseClient>,
   userId: string,
-  role: UserRole,
-  employerType?: EmployerType
+  role: UserRole
 ): Promise<SignInResult> {
   let redirectPath = '/'
 
@@ -305,25 +302,8 @@ async function determineRedirectPath(
       redirectPath = '/jobseeker/create-profile'
     }
   } else if (role === 'employer') {
-    // Check if employer has a profile
-    const { data: employerData } = await supabase
-      .from('employers')
-      .select('id')
-      .eq('user_id', userId)
-      .single()
-
-    if (employerData) {
-      redirectPath = '/employer/dashboard'
-    } else {
-      // Route to onboarding based on metadata or default
-      if (employerType === 'company') {
-        redirectPath = '/employer/company/details'
-      } else if (employerType === 'individual') {
-        redirectPath = '/employer/individual/details'
-      } else {
-        redirectPath = '/employer'
-      }
-    }
+    // CV-only MVP: the employer area is disabled — send employers to the home page.
+    redirectPath = '/'
   }
 
   return {

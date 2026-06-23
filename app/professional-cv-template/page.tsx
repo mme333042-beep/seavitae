@@ -49,7 +49,7 @@ export default function ProfessionalCVTemplatePage() {
           <p>
             <strong>Clarity above all else.</strong> Recruiters spend an average
             of six seconds on an initial CV review. A clean, uncluttered layout
-            means your most important information is seen immediately — not buried
+            means your most important information is seen immediately - not buried
             under decorative borders or complex column layouts.
           </p>
 
@@ -89,7 +89,7 @@ export default function ProfessionalCVTemplatePage() {
 
           <p>
             <strong>Personal details.</strong> Your name, contact information,
-            location, and links to your LinkedIn or portfolio — all presented
+            location, and links to your LinkedIn or portfolio - all presented
             cleanly at the top of your profile.
           </p>
 
@@ -155,7 +155,7 @@ export default function ProfessionalCVTemplatePage() {
           <p>
             <strong>Keep experience descriptions concise.</strong> Each role
             should have three to five bullet points that highlight your most
-            relevant contributions. Avoid writing lengthy paragraphs — they are
+            relevant contributions. Avoid writing lengthy paragraphs - they are
             rarely read in full during a first review.
           </p>
 
@@ -182,7 +182,7 @@ export default function ProfessionalCVTemplatePage() {
             Stop using outdated templates that were designed for a different era
             of hiring. Create your free account on SeaVitae and build a
             professional CV using a format designed for how employers actually
-            hire today — clear, structured, ATS-friendly, and built to make a
+            hire today - clear, structured, ATS-friendly, and built to make a
             strong first impression.
           </p>
         </section>
@@ -191,7 +191,7 @@ export default function ProfessionalCVTemplatePage() {
           <h2>Start With a Professional CV Template</h2>
           <p>Free, structured, and ready to send.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker">Create My Free CV</Link>
+            <Link href="/jobseeker/signup">Create My Free CV</Link>
           </div>
         </section>
       </main>

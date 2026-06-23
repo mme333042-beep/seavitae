@@ -50,7 +50,7 @@ export default function GetStartedPage() {
           <h2>Ready to build your CV?</h2>
           <p>It is free and takes just a few minutes.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker">Create My CV</Link>
+            <Link href="/jobseeker/signup">Create My CV</Link>
           </div>
         </section>
 

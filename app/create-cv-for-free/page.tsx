@@ -21,7 +21,7 @@ export default function CreateCVForFreePage() {
         <section className="about-content">
           <p>
             Creating a CV does not have to cost you anything. With SeaVitae, you
-            can build a professional, structured CV online — completely free.
+            can build a professional, structured CV online - completely free.
             Whether you are just starting out or updating an existing profile,
             our free CV builder makes the process simple, fast, and effective.
           </p>
@@ -50,7 +50,7 @@ export default function CreateCVForFreePage() {
             Unlike other free CV builders that give you a generic template and
             leave you to figure out the rest, SeaVitae guides you through each
             section of your CV step by step. You fill in your experience,
-            education, skills, certifications, and more — and we structure it
+            education, skills, certifications, and more - and we structure it
             properly for you.
           </p>
 
@@ -68,27 +68,27 @@ export default function CreateCVForFreePage() {
           </p>
 
           <p>
-            <strong>Step 1 — Create a free account.</strong> Sign up with your
+            <strong>Step 1 - Create a free account.</strong> Sign up with your
             email address. No credit card required, no subscription, no hidden
             fees.
           </p>
 
           <p>
-            <strong>Step 2 — Fill in your profile.</strong> Add your personal
+            <strong>Step 2 - Fill in your profile.</strong> Add your personal
             details, preferred job role, city, and a short professional bio.
             This helps employers understand who you are before they even open
             your CV.
           </p>
 
           <p>
-            <strong>Step 3 — Build your CV sections.</strong> Add your work
+            <strong>Step 3 - Build your CV sections.</strong> Add your work
             experience, educational background, skills, languages, certifications,
             and any projects or publications. Each section is clearly laid out so
             you always know what to fill in next.
           </p>
 
           <p>
-            <strong>Step 4 — Review and download.</strong> Once your CV is
+            <strong>Step 4 - Review and download.</strong> Once your CV is
             complete, preview it, make any final edits, and download a clean,
             ATS-friendly PDF that is ready to send to any employer.
           </p>
@@ -133,7 +133,7 @@ export default function CreateCVForFreePage() {
           <p>
             SeaVitae is built for professionals across all sectors. Whether you
             work in maritime, engineering, finance, healthcare, technology, or
-            administration — you can create a professional, ATS-friendly CV for
+            administration - you can create a professional, ATS-friendly CV for
             free in minutes.
           </p>
 
@@ -148,7 +148,7 @@ export default function CreateCVForFreePage() {
           <p>
             Once your CV is complete, you can download it as a PDF at any time.
             Your downloaded CV is clean, professionally formatted, and ready to
-            send directly to any employer — even outside of the SeaVitae
+            send directly to any employer - even outside of the SeaVitae
             platform. Your work is always yours.
           </p>
 
@@ -168,9 +168,9 @@ export default function CreateCVForFreePage() {
 
         <section id="cta">
           <h2>Create Your Free CV Now</h2>
-          <p>Build a professional, ATS-friendly CV in minutes — completely free.</p>
+          <p>Build a professional, ATS-friendly CV in minutes - completely free.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker">Create My Free CV</Link>
+            <Link href="/jobseeker/signup">Create My Free CV</Link>
           </div>
         </section>
       </main>

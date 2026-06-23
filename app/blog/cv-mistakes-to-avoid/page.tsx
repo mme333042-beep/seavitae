@@ -5,7 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "10 CV Mistakes That Are Costing You the Job | SeaVitae Blog",
-  description: "Even experienced professionals make these CV mistakes. Find out which errors are holding back your job search — and how to fix every one of them.",
+  description: "Even experienced professionals make these CV mistakes. Find out which errors are holding back your job search - and how to fix every one of them.",
 };
 
 export default function CVMistakesToAvoidPage() {
@@ -23,7 +23,7 @@ export default function CVMistakesToAvoidPage() {
 
           <p>
             Your CV is the first impression you make on a potential employer. In
-            many cases, it is the only impression — because if it does not pass
+            many cases, it is the only impression - because if it does not pass
             initial review, there will be no interview, no second look, and no
             opportunity to explain yourself in person.
           </p>
@@ -36,7 +36,7 @@ export default function CVMistakesToAvoidPage() {
           </p>
 
           <p>
-            Here are ten CV mistakes that consistently cost candidates jobs —
+            Here are ten CV mistakes that consistently cost candidates jobs -
             along with exactly how to fix each one.
           </p>
 
@@ -58,7 +58,7 @@ export default function CVMistakesToAvoidPage() {
 
           <p>
             The fix is to tailor your professional summary and skills section for
-            each application. You do not need to rewrite your entire CV —
+            each application. You do not need to rewrite your entire CV -
             adjusting the top third to reflect the priorities of each role is
             usually enough to make a significant difference.
           </p>
@@ -120,7 +120,7 @@ export default function CVMistakesToAvoidPage() {
           </p>
 
           <p style={{ borderLeft: "3px solid #2563eb", paddingLeft: "1rem", color: "#1e40af" }}>
-            Avoid all of these mistakes from the start. <Link href="/jobseeker/signup"><strong>Build your CV now on SeaVitae — it&apos;s free →</strong></Link>
+            Avoid all of these mistakes from the start. <Link href="/jobseeker/signup"><strong>Build your CV now on SeaVitae - it&apos;s free →</strong></Link>
           </p>
 
           <h2>Mistake 5: Listing Skills Without Evidence</h2>
@@ -166,8 +166,8 @@ export default function CVMistakesToAvoidPage() {
           </p>
 
           <p>
-            Pick a format and stick to it throughout. Choose one date format —
-            &quot;January 2022 — March 2024&quot; — and use it everywhere. Make
+            Pick a format and stick to it throughout. Choose one date format -
+            &quot;January 2022 - March 2024&quot; - and use it everywhere. Make
             sure all bullet points are grammatically parallel.
           </p>
 
@@ -177,19 +177,19 @@ export default function CVMistakesToAvoidPage() {
             This seems obvious, but it remains one of the most common reasons CVs
             are rejected. A single spelling error is enough for many recruiters
             to move on immediately. It signals that you do not pay attention to
-            detail — which is a problem for virtually every professional role.
+            detail - which is a problem for virtually every professional role.
           </p>
 
           <p>
             Proofread your CV slowly, out loud. Read it backwards sentence by
             sentence to catch errors your brain would otherwise auto-correct. Ask
             a trusted colleague or friend to review it. Do not rely on
-            spellcheck alone — it will not catch words that are spelled correctly
+            spellcheck alone - it will not catch words that are spelled correctly
             but used incorrectly.
           </p>
 
           <p style={{ borderLeft: "3px solid #2563eb", paddingLeft: "1rem", color: "#1e40af" }}>
-            You can create your professional CV on SeaVitae — structured correctly from the first section. <Link href="/create-cv-for-free"><strong>Create your free CV here →</strong></Link>
+            You can create your professional CV on SeaVitae - structured correctly from the first section. <Link href="/create-cv-for-free"><strong>Create your free CV here →</strong></Link>
           </p>
 
           <h2>Mistake 9: Contact Details in the Header or Footer</h2>
@@ -202,8 +202,8 @@ export default function CVMistakesToAvoidPage() {
           </p>
 
           <p>
-            Place all contact details — name, email address, phone number,
-            LinkedIn URL, and city — in the main body of the document, not in a
+            Place all contact details - name, email address, phone number,
+            LinkedIn URL, and city - in the main body of the document, not in a
             header field. This ensures ATS systems capture them correctly.
           </p>
 
@@ -256,7 +256,7 @@ export default function CVMistakesToAvoidPage() {
 
           <p>
             Your CV is not fixed. It is a living document that should be
-            updated, refined, and improved continuously. Start today — the job
+            updated, refined, and improved continuously. Start today - the job
             you want is not going to wait.
           </p>
         </section>
@@ -283,7 +283,7 @@ export default function CVMistakesToAvoidPage() {
             </li>
             <li>
               <Link href="/blog/what-ats-really-scans-for">
-                What ATS Really Scans For — And How to Make Yours Pass
+                What ATS Really Scans For - And How to Make Yours Pass
               </Link>
             </li>
           </ul>

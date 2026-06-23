@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 
   let verifiedUser = null
 
-  // 1. Try token_hash + type flow first (cross-device safe — works when email is
+  // 1. Try token_hash + type flow first (cross-device safe - works when email is
   //    opened in a different browser or device than where signup happened)
   if (token_hash && type) {
     const { data, error: verifyError } = await supabase.auth.verifyOtp({

@@ -23,7 +23,7 @@ export default function CVForFreshGraduatesPage() {
             Entering the job market as a fresh graduate can feel overwhelming,
             especially when most job listings seem to require years of experience
             you do not yet have. But a well-built CV can change that. A strong
-            CV for a fresh graduate highlights the right things — your education,
+            CV for a fresh graduate highlights the right things - your education,
             your potential, your skills, and the experience you do have, even if
             it did not come from a full-time role.
           </p>
@@ -48,7 +48,7 @@ export default function CVForFreshGraduatesPage() {
             The challenge is knowing how to present what you have in a way that
             speaks directly to what employers are looking for. A CV for a fresh
             graduate is structured differently from a senior professional&apos;s
-            CV — and that is completely fine.
+            CV - and that is completely fine.
           </p>
 
           <h2>What to Include in a Fresh Graduate CV</h2>
@@ -91,7 +91,7 @@ export default function CVForFreshGraduatesPage() {
             <strong>List your technical and soft skills.</strong> Skills matter
             significantly for entry-level roles. Include both technical skills
             relevant to your field and soft skills like communication,
-            problem-solving, teamwork, and adaptability. Be honest — only list
+            problem-solving, teamwork, and adaptability. Be honest - only list
             skills you can speak to confidently in an interview.
           </p>
 
@@ -106,7 +106,7 @@ export default function CVForFreshGraduatesPage() {
             <strong>Include volunteer work and extracurricular activities.</strong>
             Leadership roles in student unions, community service, or volunteer
             work all demonstrate responsibility and initiative. If you led a team
-            or organised an event, that is leadership experience — include it.
+            or organised an event, that is leadership experience - include it.
           </p>
 
           <h2>How to Make Your CV ATS-Friendly as a Graduate</h2>
@@ -174,7 +174,7 @@ export default function CVForFreshGraduatesPage() {
           <p>
             As a fresh graduate, a clear, well-structured CV is your biggest
             advantage. You do not need years of experience to make a strong
-            impression — you need a CV that shows who you are and what you are
+            impression - you need a CV that shows who you are and what you are
             capable of.
           </p>
 
@@ -189,7 +189,7 @@ export default function CVForFreshGraduatesPage() {
           <p>
             The first step to landing your first job is having a CV that opens
             doors. SeaVitae makes it free and straightforward to create a
-            professional, ATS-friendly CV — even if you are just starting out.
+            professional, ATS-friendly CV - even if you are just starting out.
           </p>
 
           <p>
@@ -202,7 +202,7 @@ export default function CVForFreshGraduatesPage() {
           <h2>Build Your Graduate CV for Free</h2>
           <p>Start strong with a clean, professional, ATS-friendly CV.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker">Create My Free CV</Link>
+            <Link href="/jobseeker/signup">Create My Free CV</Link>
           </div>
         </section>
       </main>

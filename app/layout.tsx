@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import AuthListener from "@/components/AuthListener";
+import { InactivityTracker } from "@/components/InactivityTracker";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://seavitae.com"),
 
   openGraph: {
-    title: "SeaVitae — Create an ATS-Friendly CV Online",
+    title: "SeaVitae - Create an ATS-Friendly CV Online",
     description: "Build a clean, professional, ATS-friendly CV online for free in minutes.",
     url: "https://seavitae.com",
     siteName: "SeaVitae",
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "SeaVitae — Create an ATS-Friendly CV Online",
+    title: "SeaVitae - Create an ATS-Friendly CV Online",
     description: "Build a clean, professional, ATS-friendly CV online for free in minutes.",
     images: ["/og-image.png"],
   },
@@ -77,7 +78,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <AuthListener />
-        {children}
+        <InactivityTracker>{children}</InactivityTracker>
         <FeedbackWidget />
       </body>
     </html>

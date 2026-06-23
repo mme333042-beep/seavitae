@@ -26,7 +26,7 @@ export default function SiteHeader() {
             <Link href="/login">Login</Link>
           </li>
           <li>
-            <Link href="/jobseeker" className="nav-cta">
+            <Link href="/jobseeker/signup" className="nav-cta">
               Create CV
             </Link>
           </li>

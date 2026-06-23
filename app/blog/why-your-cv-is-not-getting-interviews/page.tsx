@@ -5,7 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Why Your CV Is Not Getting You Interviews | SeaVitae Blog",
-  description: "Applied to dozens of jobs and heard nothing back? The problem is almost always your CV. Here is exactly why your CV is not working — and how to fix it.",
+  description: "Applied to dozens of jobs and heard nothing back? The problem is almost always your CV. Here is exactly why your CV is not working - and how to fix it.",
 };
 
 export default function WhyCVNotGettingInterviewsPage() {
@@ -24,7 +24,7 @@ export default function WhyCVNotGettingInterviewsPage() {
           <p>
             You have spent hours perfecting your CV. You have applied to ten,
             twenty, maybe fifty jobs. And you have heard almost nothing back.
-            This is one of the most demoralising experiences in a job search —
+            This is one of the most demoralising experiences in a job search -
             and it is far more common than people admit.
           </p>
 
@@ -36,7 +36,7 @@ export default function WhyCVNotGettingInterviewsPage() {
 
           <p>
             The good news is that this is fixable. Here are the most common
-            reasons CVs fail — and exactly what to do about each one.
+            reasons CVs fail - and exactly what to do about each one.
           </p>
 
           <h2>1. Your CV Is Not Passing the ATS Filter</h2>
@@ -45,7 +45,7 @@ export default function WhyCVNotGettingInterviewsPage() {
             Most large companies and many medium-sized ones use Applicant
             Tracking Systems (ATS) to filter applications before a human ever
             sees them. If your CV is not formatted correctly, it gets rejected
-            automatically — no matter how qualified you are.
+            automatically - no matter how qualified you are.
           </p>
 
           <p>
@@ -110,8 +110,8 @@ export default function WhyCVNotGettingInterviewsPage() {
           </p>
 
           <p>
-            Even small changes — using the exact job title from the posting,
-            mentioning a specific skill they listed — can significantly improve
+            Even small changes - using the exact job title from the posting,
+            mentioning a specific skill they listed - can significantly improve
             your application&apos;s performance.
           </p>
 
@@ -189,7 +189,7 @@ export default function WhyCVNotGettingInterviewsPage() {
           <h2>7. You Are Applying to the Wrong Jobs</h2>
 
           <p>
-            Sometimes the problem is not the CV — it is the strategy. If you are
+            Sometimes the problem is not the CV - it is the strategy. If you are
             applying for roles that genuinely require five years of experience and
             you have two, no CV will bridge that gap. If you are applying outside
             your field without addressing the career change in your summary, most
@@ -230,9 +230,9 @@ export default function WhyCVNotGettingInterviewsPage() {
           </p>
 
           <p>
-            SeaVitae&apos;s free CV builder guides you through every section —
+            SeaVitae&apos;s free CV builder guides you through every section -
             professional summary, work experience, skills, education,
-            certifications, and more — so nothing important gets left out and
+            certifications, and more - so nothing important gets left out and
             everything is formatted correctly from the start.
           </p>
 
@@ -253,7 +253,7 @@ export default function WhyCVNotGettingInterviewsPage() {
           <p>
             The job market is competitive. But a strong, well-structured CV puts
             you in a completely different position. Take the time to get it right
-            — it is the most important document in your career.
+            - it is the most important document in your career.
           </p>
         </section>
 
@@ -274,7 +274,7 @@ export default function WhyCVNotGettingInterviewsPage() {
           <ul>
             <li>
               <Link href="/blog/what-ats-really-scans-for">
-                What ATS Really Scans For — And How to Make Yours Pass
+                What ATS Really Scans For - And How to Make Yours Pass
               </Link>
             </li>
             <li>

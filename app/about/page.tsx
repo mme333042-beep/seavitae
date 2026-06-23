@@ -19,7 +19,7 @@ export default function AboutPage() {
           </p>
 
           <p>
-            We believe building a great CV should be simple and calm — not a
+            We believe building a great CV should be simple and calm - not a
             fight with templates, formatting, or fiddly design tools. You add
             your details, our AI sharpens the wording, and you download a
             polished, recruiter-ready PDF.
@@ -27,7 +27,7 @@ export default function AboutPage() {
 
           <p>
             Every CV is structured the way applicant tracking systems expect,
-            with clear sections that adapt to your profession — so your
+            with clear sections that adapt to your profession - so your
             experience is read correctly by software and people alike.
           </p>
 
@@ -46,7 +46,7 @@ export default function AboutPage() {
           <h2>Build your CV</h2>
           <p>Create a professional, ATS-friendly CV in minutes.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker">Create My CV</Link>
+            <Link href="/jobseeker/signup">Create My CV</Link>
           </div>
         </section>
       </main>

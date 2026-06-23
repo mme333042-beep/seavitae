@@ -108,12 +108,7 @@ function LoginForm() {
 
         <div style={{ marginTop: "var(--space-xl)", textAlign: "center" }}>
           <p>
-            Don&apos;t have an account?
-          </p>
-          <p>
-            <Link href="/employer">Sign up as Employer</Link>
-            {" or "}
-            <Link href="/jobseeker">Sign up as Jobseeker</Link>
+            Don&apos;t have an account? <Link href="/jobseeker/signup">Sign up</Link>
           </p>
         </div>
       </section>

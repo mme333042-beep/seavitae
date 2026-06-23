@@ -67,6 +67,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // CV-only MVP: the employer area is disabled. Send any /employer/* request
+  // back to the home page so no employer pages or onboarding can load.
+  if (pathname.startsWith('/employer')) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -165,35 +171,13 @@ export async function middleware(request: NextRequest) {
     } else if (role === 'jobseeker') {
       return NextResponse.redirect(new URL('/jobseeker/dashboard', request.url))
     } else if (role === 'employer') {
-      return NextResponse.redirect(new URL('/employer/dashboard', request.url))
+      // Employer area is disabled in the MVP — send them home, not to employer pages.
+      return NextResponse.redirect(new URL('/', request.url))
     }
 
     // If no role found at all, let them access the auth route
     // This allows users with incomplete setup to log in properly
     // instead of getting stuck in a redirect loop
-  }
-
-  // Role-based access control for authenticated users (jobseeker/employer only)
-  // Admin route access is handled by app/admin/layout.tsx via DB query
-  if (user && !error && !isAdminRoute) {
-    // Query database for role - this is the SINGLE source of truth
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    const role = userData?.role as string | undefined
-
-    // Prevent jobseekers from accessing employer routes
-    if (role === 'jobseeker' && isEmployerRoute) {
-      return NextResponse.redirect(new URL('/jobseeker/dashboard', request.url))
-    }
-
-    // Prevent employers from accessing jobseeker routes
-    if (role === 'employer' && isJobseekerRoute) {
-      return NextResponse.redirect(new URL('/employer/dashboard', request.url))
-    }
   }
 
   return response
