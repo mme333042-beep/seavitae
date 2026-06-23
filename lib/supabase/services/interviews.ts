@@ -1,9 +1,6 @@
 import { getSupabaseClient } from '../client'
 import type {
   Interview,
-  InterviewInsert,
-  InterviewUpdate,
-  InterviewStatus,
   InterviewType,
   Employer,
   Jobseeker,

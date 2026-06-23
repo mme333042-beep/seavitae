@@ -146,26 +146,6 @@ const ROLE_KEYWORDS: Record<string, string[]> = {
   'civil engineer': ['structural design', 'project management', 'site supervision', 'regulatory compliance', 'technical drawings'],
 };
 
-// Common technical skills by category
-const TECHNICAL_SKILLS_BY_ROLE: Record<string, string[]> = {
-  'software': ['Git', 'Agile/Scrum', 'REST APIs', 'Unit Testing', 'Code Review'],
-  'frontend': ['HTML5', 'CSS3', 'JavaScript', 'Responsive Design', 'Web Performance'],
-  'backend': ['Database Management', 'API Design', 'Server Administration', 'Security Best Practices'],
-  'data': ['SQL', 'Data Visualization', 'Statistical Analysis', 'ETL Processes'],
-  'design': ['Design Systems', 'User Research', 'Prototyping', 'Visual Design Principles'],
-  'marketing': ['Google Analytics', 'SEO/SEM', 'Content Management', 'Marketing Automation'],
-  'management': ['Team Leadership', 'Strategic Planning', 'Budget Management', 'Stakeholder Communication'],
-};
-
-// Soft skills that are universally valuable
-const UNIVERSAL_SOFT_SKILLS = [
-  'Communication',
-  'Problem-solving',
-  'Team Collaboration',
-  'Time Management',
-  'Adaptability',
-];
-
 // ============================================================================
 // ATS CONTENT LIMITS (Layout Safety)
 // ============================================================================
@@ -239,22 +219,6 @@ const WEAK_PHRASES: { pattern: RegExp; replacement: string }[] = [
   { pattern: /\band so on\b/gi, replacement: '' },
   { pattern: /\band more\b/gi, replacement: '' },
 ];
-
-// ============================================================================
-// ACTION VERBS FOR EXPERIENCE DESCRIPTIONS
-// ============================================================================
-
-const WEAK_VERBS = ['did', 'made', 'worked on', 'was responsible for', 'helped with', 'assisted with', 'was involved in'];
-
-const STRONG_ACTION_VERBS: Record<string, string[]> = {
-  leadership: ['Led', 'Directed', 'Managed', 'Supervised', 'Coordinated', 'Orchestrated', 'Spearheaded'],
-  achievement: ['Achieved', 'Accomplished', 'Delivered', 'Exceeded', 'Surpassed', 'Attained'],
-  creation: ['Developed', 'Created', 'Designed', 'Built', 'Established', 'Launched', 'Initiated'],
-  improvement: ['Improved', 'Enhanced', 'Optimized', 'Streamlined', 'Increased', 'Reduced', 'Accelerated'],
-  analysis: ['Analyzed', 'Evaluated', 'Assessed', 'Researched', 'Investigated', 'Identified'],
-  communication: ['Presented', 'Communicated', 'Collaborated', 'Negotiated', 'Facilitated'],
-  implementation: ['Implemented', 'Executed', 'Deployed', 'Integrated', 'Configured'],
-};
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -347,37 +311,6 @@ function convertToPastTense(text: string): string {
   }
 
   return text;
-}
-
-/**
- * Attempts to add quantifiable metrics to a description
- * Only adds metrics that can be logically inferred
- */
-function addInferrableMetrics(description: string, title: string): string {
-  // Don't modify if already has numbers/percentages
-  if (/\d+%|\d+\s*(users|clients|customers|team|projects|people)/.test(description)) {
-    return description;
-  }
-
-  // Only suggest metrics for certain contexts
-  const metricPatterns: { pattern: RegExp; suggestion: string }[] = [
-    // Team leadership
-    { pattern: /\b(led|managed|supervised)\s+(a\s+)?team\b/i, suggestion: ' of professionals' },
-    // Project delivery
-    { pattern: /\b(delivered|completed|finished)\s+(the\s+)?project\b/i, suggestion: ' on time and within budget' },
-    // Process improvement
-    { pattern: /\b(improved|enhanced|optimized)\s+(\w+\s+)?(process|workflow|efficiency)\b/i, suggestion: ', resulting in increased productivity' },
-  ];
-
-  for (const { pattern, suggestion } of metricPatterns) {
-    if (pattern.test(description) && !description.includes(suggestion)) {
-      // Only add if it makes sense and doesn't already exist
-      description = description.replace(pattern, (match) => match + suggestion);
-      break; // Only add one suggestion per description
-    }
-  }
-
-  return description;
 }
 
 /**
@@ -475,65 +408,6 @@ function truncateToWordLimit(text: string, maxWords: number): string {
 }
 
 /**
- * Truncates a bullet point to approximately one line (max words)
- */
-function truncateBullet(bullet: string, maxWords: number): string {
-  const words = bullet.trim().split(/\s+/);
-  if (words.length <= maxWords) return bullet;
-
-  // Truncate and clean up
-  let truncated = words.slice(0, maxWords).join(' ');
-  truncated = truncated.replace(/[,;:\s]+$/, '');
-
-  // Ensure it ends with a period
-  if (!/[.!?]$/.test(truncated)) {
-    truncated += '.';
-  }
-
-  return truncated;
-}
-
-/**
- * Validates and cleans a skill name
- * - Max 2 words
- * - No punctuation inside
- * - Normalized casing
- */
-function validateSkill(skillName: string): string | null {
-  // Clean and normalize
-  let cleaned = skillName.trim();
-
-  // Remove punctuation except hyphens and slashes (for things like "CI/CD")
-  cleaned = cleaned.replace(/[.,;:!?'"()[\]{}]/g, '');
-
-  // Normalize casing
-  if (cleaned === cleaned.toUpperCase() && cleaned.length > 4) {
-    // If all caps and longer than acronym, title case it
-    cleaned = toTitleCase(cleaned);
-  }
-
-  // Check word count (max 2 words, but allow slashes like "CI/CD")
-  const words = cleaned.split(/\s+/).filter(w => w.length > 0);
-  if (words.length > 2) {
-    // Try to keep only the most meaningful 2 words
-    cleaned = words.slice(0, 2).join(' ');
-  }
-
-  // Check if it's a filler skill
-  const lowerCleaned = cleaned.toLowerCase();
-  if (FILLER_SKILLS.some(filler => lowerCleaned === filler || lowerCleaned.includes(filler))) {
-    return null; // Remove filler skills
-  }
-
-  // Minimum length check
-  if (cleaned.length < 2) {
-    return null;
-  }
-
-  return cleaned;
-}
-
-/**
  * Removes personal statements and filler from text
  */
 function removePersonalFiller(text: string): string {
@@ -598,39 +472,6 @@ function getKeywordsForRole(role: string): string[] {
 
   // Fallback to generic professional keywords
   return ['team collaboration', 'problem-solving', 'communication', 'project delivery'];
-}
-
-/**
- * Gets relevant technical skills based on role category
- */
-function getTechnicalSkillsForRole(role: string): string[] {
-  const normalizedRole = role.toLowerCase();
-  const skills: string[] = [];
-
-  // Determine categories based on role
-  if (/software|developer|engineer|programmer|coding/i.test(normalizedRole)) {
-    skills.push(...(TECHNICAL_SKILLS_BY_ROLE['software'] || []));
-  }
-  if (/frontend|front-end|ui|react|angular|vue/i.test(normalizedRole)) {
-    skills.push(...(TECHNICAL_SKILLS_BY_ROLE['frontend'] || []));
-  }
-  if (/backend|back-end|server|api|database/i.test(normalizedRole)) {
-    skills.push(...(TECHNICAL_SKILLS_BY_ROLE['backend'] || []));
-  }
-  if (/data|analyst|scientist|analytics/i.test(normalizedRole)) {
-    skills.push(...(TECHNICAL_SKILLS_BY_ROLE['data'] || []));
-  }
-  if (/design|ux|ui|graphic/i.test(normalizedRole)) {
-    skills.push(...(TECHNICAL_SKILLS_BY_ROLE['design'] || []));
-  }
-  if (/marketing|seo|content|social/i.test(normalizedRole)) {
-    skills.push(...(TECHNICAL_SKILLS_BY_ROLE['marketing'] || []));
-  }
-  if (/manager|director|lead|head|chief/i.test(normalizedRole)) {
-    skills.push(...(TECHNICAL_SKILLS_BY_ROLE['management'] || []));
-  }
-
-  return [...new Set(skills)]; // Remove duplicates
 }
 
 // ============================================================================
@@ -776,7 +617,7 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
     // 1. CONSERVATIVE SPLIT: Only split on clear separators, preserve hyphenated words
     // The goal is to NOT break things - if unsure, keep content together
 
-    let workingText = originalDescription;
+    const workingText = originalDescription;
 
     // First, check if the text already has bullet formatting (• or -)
     const hasBulletFormatting = /^[\s]*[•\-\*]\s/m.test(workingText);
@@ -909,8 +750,8 @@ export function enhanceExperience(experiences: ExperienceItem[]): ExperienceItem
  */
 export function enhanceSkills(
   skills: SkillItem[],
-  preferredRole: string,
-  experiences: ExperienceItem[]
+  _preferredRole: string,
+  _experiences: ExperienceItem[]
 ): SkillItem[] {
   if (!skills || skills.length === 0) {
     return skills || [];
@@ -1231,7 +1072,7 @@ export function enhanceCV(data: CVData): EnhancedCVData {
  *
  * Keeping this function for backwards compatibility but it should not be called.
  */
-export function prepareSummaryWithEmail(summary: string, email: string): string {
+export function prepareSummaryWithEmail(summary: string, _email: string): string {
   console.warn('[CV Enhancement] prepareSummaryWithEmail is deprecated - email should not be injected into summary');
   // Return summary unchanged - do NOT inject email
   return summary || '';

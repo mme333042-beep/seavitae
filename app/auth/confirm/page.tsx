@@ -1,19 +1,17 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import { trackEmailVerified, identifyUser } from "@/lib/posthog";
+import { trackEmailVerified } from "@/lib/posthog";
 
 type ConfirmationState = "loading" | "success" | "already_confirmed" | "expired" | "error";
 
 function ConfirmEmailContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [state, setState] = useState<ConfirmationState>("loading");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [role, setRole] = useState<string>("");
   const [resending, setResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -25,12 +23,9 @@ function ConfirmEmailContent() {
 
     if (success === "true") {
       setState("success");
-      if (roleParam) {
-        setRole(roleParam);
-        // Track email verified (PostHog funnel tracking)
-        if (roleParam === 'jobseeker' || roleParam === 'employer') {
-          trackEmailVerified(roleParam);
-        }
+      // Track email verified (PostHog funnel tracking)
+      if (roleParam === 'jobseeker' || roleParam === 'employer') {
+        trackEmailVerified(roleParam);
       }
     } else if (error) {
       // Determine error type
@@ -57,32 +52,6 @@ function ConfirmEmailContent() {
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
-
-  function getRedirectPath(): string {
-    switch (role) {
-      case "admin":
-        return "/admin";
-      case "jobseeker":
-        return "/jobseeker/create-profile";
-      case "employer":
-        return "/employer";
-      default:
-        return "/login";
-    }
-  }
-
-  function getRedirectLabel(): string {
-    switch (role) {
-      case "admin":
-        return "Go to Admin Dashboard";
-      case "jobseeker":
-        return "Complete Your Profile";
-      case "employer":
-        return "Complete Your Profile";
-      default:
-        return "Continue to Login";
-    }
-  }
 
   async function handleResendConfirmation() {
     if (resendCooldown > 0 || resending) return;

@@ -29,8 +29,7 @@ interface ConversationSummary {
 // Group messages into conversations by the other participant
 function groupIntoConversations(
   inboxMessages: MessageWithSender[],
-  sentMessages: MessageWithRecipient[],
-  currentUserId: string
+  sentMessages: MessageWithRecipient[]
 ): ConversationSummary[] {
   const conversationMap = new Map<string, ConversationSummary>();
 
@@ -106,7 +105,6 @@ export default function MessagesInboxPage() {
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [userName, setUserName] = useState<string>("User");
   const [userRole, setUserRole] = useState<UserRole>("jobseeker");
-  const [currentUserId, setCurrentUserId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalUnread, setTotalUnread] = useState(0);
@@ -121,7 +119,6 @@ export default function MessagesInboxPage() {
         }
 
         setUserRole(userProfile.role);
-        setCurrentUserId(userProfile.user?.id || "");
 
         if (userProfile.profile) {
           if ("full_name" in userProfile.profile) {
@@ -141,8 +138,7 @@ export default function MessagesInboxPage() {
         // Group into conversations
         const grouped = groupIntoConversations(
           inboxResult.messages,
-          sentResult.messages,
-          userProfile.user?.id || ""
+          sentResult.messages
         );
 
         setConversations(grouped);

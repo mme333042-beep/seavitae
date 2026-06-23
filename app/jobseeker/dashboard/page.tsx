@@ -13,6 +13,7 @@ import { getUnreadCount } from "@/lib/supabase/services/messages";
 import { getPendingInterviewCount } from "@/lib/supabase/services/interviews";
 import { downloadCVAsPDF, isPrintAvailable, CVData } from "@/lib/pdfGenerator";
 import NotificationBadge from "@/components/NotificationBadge";
+import CVDocument from "@/components/CVDocument";
 import type { Jobseeker, CV, CVSection } from "@/lib/supabase/types";
 
 function formatLastUpdated(date: Date): string {
@@ -248,6 +249,12 @@ export default function JobseekerDashboardPage() {
 
   const lastUpdated = new Date(jobseeker.updated_at);
   const isVisible = jobseeker.is_visible;
+  const cvPreviewData = buildCVData(jobseeker, sections, userEmail);
+  const hasCVContent =
+    !!jobseeker.bio ||
+    cvPreviewData.experience.length > 0 ||
+    cvPreviewData.skills.length > 0 ||
+    cvPreviewData.education.length > 0;
 
   return (
     <main>
@@ -327,6 +334,17 @@ export default function JobseekerDashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* CV Preview - identical to the downloadable PDF */}
+      {hasCVContent && (
+        <section aria-label="CV Preview">
+          <h2>CV Preview</h2>
+          <p className="form-help" style={{ marginBottom: "var(--space-md)" }}>
+            This is exactly how your downloaded CV will look.
+          </p>
+          <CVDocument cv={cvPreviewData} />
+        </section>
+      )}
 
       {/* Profile Summary */}
       <section aria-label="CV Summary">

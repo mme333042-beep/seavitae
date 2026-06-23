@@ -79,7 +79,7 @@ export interface Feedback {
 }
 
 // In-memory storage for soft launch
-let feedbackList: Feedback[] = [];
+const feedbackList: Feedback[] = [];
 
 /**
  * Submit feedback

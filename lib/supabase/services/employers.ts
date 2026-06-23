@@ -4,10 +4,6 @@ import type {
   EmployerInsert,
   EmployerUpdate,
   SavedCV,
-  SavedCVInsert,
-  Jobseeker,
-  CV,
-  CVSection,
   CVSnapshotData,
   Json,
 } from '../types'
@@ -335,11 +331,9 @@ export async function isCVSaved(
 
 // Add notes to a saved CV (employers only update notes, not snapshot)
 export async function updateSavedCVNotes(
-  savedCVId: string,
-  notes: string
+  _savedCVId: string,
+  _notes: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = getSupabaseClient()
-
   // Note: saved_cvs has no UPDATE policy in RLS because snapshots are immutable
   // To add notes, we need to use the admin client or create a specific RLS policy
   // For now, notes should be set at creation time or stored separately

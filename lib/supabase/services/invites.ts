@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../client'
-import type { Invite, InviteInsert, UserRole } from '../types'
+import type { Invite, UserRole } from '../types'
 
 // Generate a unique invite code
 function generateInviteCode(): string {

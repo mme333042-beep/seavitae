@@ -12,7 +12,6 @@ import {
   getMyInterviewsAsJobseeker,
   respondToInterview,
 } from "@/lib/supabase/services/interviews";
-import { getEmployerById } from "@/lib/supabase/services/employers";
 import type { Interview, Employer } from "@/lib/supabase/types";
 import type { EmployerProfile } from "@/lib/employerVerification";
 
@@ -49,6 +48,8 @@ export default function JobseekerInterviewsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
+  // Capture "now" once on mount so render stays pure (no impure Date.now() during render)
+  const [now] = useState(() => Date.now());
 
   useEffect(() => {
     async function loadData() {
@@ -153,7 +154,7 @@ export default function JobseekerInterviewsPage() {
   function formatDaysAgo(dateStr: string): string {
     const date = new Date(dateStr);
     const days = Math.floor(
-      (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24)
+      (now - date.getTime()) / (1000 * 60 * 60 * 24)
     );
     if (days === 0) return "Today";
     if (days === 1) return "Yesterday";

@@ -24,7 +24,7 @@ export default function TermsOfServicePage() {
           <h3>For Jobseekers</h3>
           <p>
             You create a CV profile with your professional information. When you
-            enable "Open to Discovery," employers can find your profile through
+            enable &quot;Open to Discovery,&quot; employers can find your profile through
             search. Your profile displays your name, city, role, skills, and
             professional background. Your email and phone number are kept
             private until you accept an interview request.

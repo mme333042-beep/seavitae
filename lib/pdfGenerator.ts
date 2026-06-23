@@ -1,7 +1,16 @@
 /**
  * PDF Generator for CV Downloads
- * Uses browser print functionality for clean, professional PDF output
+ *
+ * Produces a clean, two-column, ATS-friendly CV as printable HTML that the
+ * browser turns into a PDF. The layout adapts its section headings to the
+ * user's role (see lib/cvLayout.ts):
+ *   - Name in bold serif, top-left (no avatar)
+ *   - Contact details top-right
+ *   - Blue, uppercase section subheadings; Merriweather serif body in soft gray
+ *   - Role-aware "Key Achievements / Highlights" block derived from experience
  */
+
+import { getSectionLabels, extractKeyAchievements } from "./cvLayout";
 
 export interface CVData {
   fullName: string;
@@ -59,26 +68,227 @@ export function generateCVFilename(fullName: string): string {
 }
 
 /**
- * Get initials from full name
+ * Escape user-supplied text so it can't break the HTML layout (or inject markup).
  */
-function getInitials(fullName: string): string {
-  return fullName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+function esc(value: string | number | null | undefined): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 /**
- * Generate printable HTML for CV - Two Column Modern Design
+ * Render an experience/education description as bullet list or paragraph.
+ */
+function renderDescription(description: string): string {
+  if (!description) return "";
+  const lines = description
+    .split(/[•\n]/)
+    .map((line) => line.replace(/^[\s\-*•]+/, "").trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length > 1) {
+    return `<ul class="bullets">${lines
+      .map((line) => `<li>${esc(line)}</li>`)
+      .join("")}</ul>`;
+  }
+  return `<p class="entry-desc">${esc(description)}</p>`;
+}
+
+/**
+ * Format an experience date range.
+ */
+function formatRange(startDate: string, endDate: string): string {
+  const start = esc(startDate);
+  const end = endDate ? esc(endDate) : "Present";
+  return start ? `${start} – ${end}` : end;
+}
+
+/**
+ * Generate printable HTML for CV — role-adaptive two-column design.
  */
 export function generatePrintableCV(cv: CVData): string {
-  const initials = getInitials(cv.fullName);
+  const labels = getSectionLabels(cv.preferredRole);
+  const achievements = labels.showAchievements
+    ? extractKeyAchievements(cv.experience)
+    : [];
 
-  // Check if right column has content
-  const hasRightContent = cv.skills.length > 0 || cv.languages.length > 0 ||
-    cv.certifications.length > 0 || cv.projects.length > 0 || cv.publications.length > 0;
+  const experienceEntry = (exp: CVData["experience"][number]): string => `
+    <div class="entry">
+      <p class="entry-head"><strong>${esc(exp.company)}</strong>${
+        exp.title ? ` — <em>${esc(exp.title)}</em>` : ""
+      }</p>
+      <p class="entry-meta">${formatRange(exp.startDate, exp.endDate)}${
+        exp.location ? ` &middot; ${esc(exp.location)}` : ""
+      }</p>
+      ${renderDescription(exp.description)}
+    </div>`;
+
+  const educationEntry = (edu: CVData["education"][number]): string => `
+    <div class="entry">
+      <p class="entry-head"><strong>${esc(edu.degree)}</strong></p>
+      <p class="entry-sub">${esc(edu.institution)}</p>
+      <p class="entry-meta">${edu.year ? esc(edu.year) : ""}${
+        edu.location ? `${edu.year ? " &middot; " : ""}${esc(edu.location)}` : ""
+      }</p>
+    </div>`;
+
+  const bulletList = (items: string[]): string =>
+    `<ul class="bullets">${items
+      .map((item) => `<li>${esc(item)}</li>`)
+      .join("")}</ul>`;
+
+  // -- Left column ----------------------------------------------------------
+  const leftColumn = `
+    <div class="col-left">
+      <header class="name-block">
+        <h1 class="cv-name">${esc(cv.fullName)}</h1>
+        ${cv.preferredRole ? `<p class="cv-role">${esc(cv.preferredRole)}</p>` : ""}
+      </header>
+
+      ${
+        cv.bio
+          ? `<section class="section">
+              <h2 class="section-title">${esc(labels.summary)}</h2>
+              <p class="summary-text">${esc(cv.bio)}</p>
+            </section>`
+          : ""
+      }
+
+      ${
+        cv.experience.length > 0
+          ? `<section class="section">
+              <h2 class="section-title">${esc(labels.experience)}</h2>
+              ${cv.experience.map(experienceEntry).join("")}
+            </section>`
+          : ""
+      }
+
+      ${
+        cv.education.length > 0
+          ? `<section class="section">
+              <h2 class="section-title">${esc(labels.education)}</h2>
+              ${cv.education.map(educationEntry).join("")}
+            </section>`
+          : ""
+      }
+    </div>`;
+
+  // -- Right column ---------------------------------------------------------
+  const contactItems = [
+    cv.city ? esc(cv.city) : "",
+    cv.phone ? esc(cv.phone) : "",
+    cv.email ? `<span class="contact-link">${esc(cv.email)}</span>` : "",
+  ].filter(Boolean);
+
+  const rightColumn = `
+    <div class="col-right">
+      ${
+        contactItems.length > 0
+          ? `<section class="section contact">
+              ${contactItems.map((item) => `<p>${item}</p>`).join("")}
+            </section>`
+          : ""
+      }
+
+      ${
+        achievements.length > 0
+          ? `<section class="section">
+              <h2 class="section-title">${esc(labels.achievements)}</h2>
+              ${bulletList(achievements)}
+            </section>`
+          : ""
+      }
+
+      ${
+        cv.skills.length > 0
+          ? `<section class="section">
+              <h2 class="section-title">${esc(labels.skills)}</h2>
+              ${bulletList(cv.skills)}
+            </section>`
+          : ""
+      }
+
+      ${
+        cv.languages.length > 0
+          ? `<section class="section">
+              <h2 class="section-title">Languages</h2>
+              ${cv.languages
+                .map(
+                  (lang) =>
+                    `<p class="kv"><span>${esc(lang.language)}</span><span class="kv-muted">${esc(
+                      lang.proficiency
+                    )}</span></p>`
+                )
+                .join("")}
+            </section>`
+          : ""
+      }
+
+      ${
+        cv.certifications.length > 0
+          ? `<section class="section">
+              <h2 class="section-title">Certifications</h2>
+              ${cv.certifications
+                .map(
+                  (cert) =>
+                    `<div class="stack-item">
+                      <p class="stack-title">${esc(cert.name)}</p>
+                      <p class="stack-meta">${esc(cert.issuer)}${
+                        cert.year ? ` (${esc(cert.year)})` : ""
+                      }</p>
+                    </div>`
+                )
+                .join("")}
+            </section>`
+          : ""
+      }
+
+      ${
+        cv.projects.length > 0
+          ? `<section class="section">
+              <h2 class="section-title">Projects</h2>
+              ${cv.projects
+                .map(
+                  (proj) =>
+                    `<div class="stack-item">
+                      <p class="stack-title accent">${esc(proj.name)}</p>
+                      ${proj.description ? `<p class="stack-meta">${esc(proj.description)}</p>` : ""}
+                      ${
+                        proj.link
+                          ? `<a href="${esc(proj.link)}" class="stack-link">${esc(proj.link)}</a>`
+                          : ""
+                      }
+                    </div>`
+                )
+                .join("")}
+            </section>`
+          : ""
+      }
+
+      ${
+        cv.publications.length > 0
+          ? `<section class="section">
+              <h2 class="section-title">Publications</h2>
+              ${cv.publications
+                .map(
+                  (pub) =>
+                    `<div class="stack-item">
+                      <p class="stack-title">${esc(pub.title)}</p>
+                      <p class="stack-meta italic">${esc(pub.venue)}</p>
+                      ${
+                        pub.link
+                          ? `<a href="${esc(pub.link)}" class="stack-link">${esc(pub.link)}</a>`
+                          : ""
+                      }
+                    </div>`
+                )
+                .join("")}
+            </section>`
+          : ""
+      }
+    </div>`;
 
   return `
 <!DOCTYPE html>
@@ -86,330 +296,139 @@ export function generatePrintableCV(cv: CVData): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${cv.fullName} - CV</title>
+  <title>${esc(cv.fullName)} - CV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Merriweather+Sans:wght@600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --cv-blue: #2563EB;
+      --cv-ink: #1f2937;
+      --cv-body: #374151;
+      --cv-muted: #6b7280;
+      --cv-line: #e5e7eb;
     }
 
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
       font-size: 10pt;
-      line-height: 1.4;
-      color: #374151;
-      background: white;
-      padding: 30px 40px;
+      line-height: 1.6;
+      color: var(--cv-body);
+      background: #ffffff;
+      padding: 40px 44px;
       max-width: 900px;
       margin: 0 auto;
     }
 
-    /* Header */
-    .header {
+    .cv {
       display: flex;
-      justify-content: space-between;
+      gap: 34px;
       align-items: flex-start;
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #e5e7eb;
     }
 
-    .header-left {
-      flex: 1;
-    }
+    .col-left { flex: 1.6; min-width: 0; }
+    .col-right { flex: 1; min-width: 0; }
 
-    .header-name {
-      font-size: 28pt;
+    /* Name block */
+    .name-block { margin-bottom: 22px; }
+
+    .cv-name {
+      font-family: 'Merriweather', Georgia, serif;
       font-weight: 700;
-      color: #1e3a5f;
-      margin-bottom: 4px;
-      letter-spacing: 0.5px;
+      font-size: 27pt;
+      line-height: 1.1;
+      color: #111827;
+      letter-spacing: -0.5px;
     }
 
-    .header-role {
-      font-size: 13pt;
-      color: #60a5fa;
-      font-weight: 500;
-      margin-bottom: 12px;
+    .cv-role {
+      font-size: 12pt;
+      color: var(--cv-muted);
+      margin-top: 4px;
     }
 
-    .header-contact {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      font-size: 9pt;
-      color: #4b5563;
-    }
-
-    .contact-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .contact-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #6b7280;
-      font-size: 12px;
-    }
-
-    /* Wrapper to keep section title + first item together */
-    .section-header-group {
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-
-    .header-avatar {
-      width: 70px;
-      height: 70px;
-      background: #dbeafe;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22pt;
-      font-weight: 600;
-      color: #3b82f6;
-      flex-shrink: 0;
-      margin-left: 20px;
-    }
-
-    /* Main Layout */
-    .main-content {
-      display: flex;
-      gap: 30px;
-    }
-
-    .left-column {
-      flex: ${hasRightContent ? '1.4' : '1'};
-    }
-
-    .right-column {
-      flex: 0.6;
-    }
-
-    /* Section Styling */
-    .section {
-      margin-bottom: 20px;
-    }
+    /* Sections */
+    .section { margin-bottom: 18px; }
 
     .section-title {
-      font-size: 11pt;
+      font-family: 'Merriweather Sans', 'Segoe UI', Arial, sans-serif;
       font-weight: 700;
-      color: #1e3a5f;
+      font-size: 10.5pt;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-      padding-bottom: 6px;
-      border-bottom: 2.5px solid #f59e0b;
+      color: var(--cv-blue);
+      margin-bottom: 8px;
     }
 
-    /* Summary */
-    .summary-text {
-      color: #4b5563;
-      line-height: 1.6;
-      text-align: justify;
-    }
+    .summary-text { color: var(--cv-body); }
 
-    /* Experience & Education Entries */
-    .entry {
-      margin-bottom: 16px;
-    }
+    /* Experience / education entries */
+    .entry { margin-bottom: 13px; }
+    .entry:last-child { margin-bottom: 0; }
 
-    .entry:last-child {
-      margin-bottom: 0;
-    }
+    .entry-head { font-size: 10.5pt; color: var(--cv-ink); }
+    .entry-head strong { font-weight: 700; }
+    .entry-head em { font-style: italic; color: var(--cv-body); }
 
-    .entry-title {
-      font-size: 11pt;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 2px;
-    }
-
-    .entry-company {
-      font-size: 10pt;
-      color: #0d9488;
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
+    .entry-sub { font-size: 10pt; color: var(--cv-body); }
 
     .entry-meta {
-      display: flex;
-      gap: 16px;
-      font-size: 9pt;
-      color: #6b7280;
-      margin-bottom: 6px;
+      font-size: 8.5pt;
+      color: var(--cv-muted);
+      margin-bottom: 5px;
     }
 
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+    .entry-desc { color: var(--cv-body); }
+
+    /* Bullet lists (dash style, matching the reference) */
+    .bullets { list-style: none; }
+    .bullets li {
+      position: relative;
+      padding-left: 14px;
+      margin-bottom: 5px;
+    }
+    .bullets li:last-child { margin-bottom: 0; }
+    .bullets li::before {
+      content: "–";
+      position: absolute;
+      left: 0;
+      color: var(--cv-muted);
     }
 
-    .meta-icon {
-      font-size: 10px;
-    }
+    /* Contact (right column top) */
+    .contact p { font-size: 9.5pt; color: var(--cv-body); margin-bottom: 2px; }
+    .contact-link { color: var(--cv-blue); word-break: break-all; }
 
-    .entry-description {
-      color: #4b5563;
-      font-size: 9.5pt;
-      line-height: 1.5;
-    }
-
-    .entry-description ul {
-      margin: 0;
-      padding-left: 16px;
-    }
-
-    .entry-description li {
-      margin-bottom: 3px;
-    }
-
-    /* Skills */
-    .skills-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      list-style: none;
-    }
-
-    .skill-tag {
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 9pt;
-      color: #374151;
-    }
-
-    /* Languages */
-    .language-item {
+    /* Key/value rows (languages) */
+    .kv {
       display: flex;
       justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px dotted #e5e7eb;
+      gap: 8px;
       font-size: 9.5pt;
+      margin-bottom: 3px;
     }
+    .kv-muted { color: var(--cv-muted); }
 
-    .language-item:last-child {
-      border-bottom: none;
-    }
+    /* Stacked items (certs / projects / publications) */
+    .stack-item { margin-bottom: 9px; }
+    .stack-item:last-child { margin-bottom: 0; }
+    .stack-title { font-weight: 700; font-size: 9.5pt; color: var(--cv-ink); }
+    .stack-title.accent { color: var(--cv-blue); }
+    .stack-meta { font-size: 9pt; color: var(--cv-muted); }
+    .stack-meta.italic { font-style: italic; }
+    .stack-link { font-size: 8.5pt; color: var(--cv-blue); text-decoration: none; word-break: break-all; }
 
-    .language-name {
-      font-weight: 500;
-      color: #1f2937;
-    }
+    /* Keep a heading with the start of its content */
+    .section-title { break-after: avoid; page-break-after: avoid; }
+    .entry, .stack-item { break-inside: avoid; page-break-inside: avoid; }
 
-    .language-level {
-      color: #6b7280;
-    }
-
-    /* Certifications */
-    .cert-item {
-      margin-bottom: 10px;
-    }
-
-    .cert-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .cert-name {
-      font-weight: 600;
-      color: #1f2937;
-      font-size: 9.5pt;
-    }
-
-    .cert-meta {
-      font-size: 9pt;
-      color: #6b7280;
-    }
-
-    /* Projects */
-    .project-item {
-      margin-bottom: 10px;
-    }
-
-    .project-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .project-name {
-      font-weight: 600;
-      color: #0d9488;
-      font-size: 9.5pt;
-    }
-
-    .project-desc {
-      font-size: 9pt;
-      color: #4b5563;
-      margin-top: 2px;
-    }
-
-    .project-link {
-      font-size: 8pt;
-      color: #3b82f6;
-      text-decoration: none;
-      word-break: break-all;
-    }
-
-    /* Publications */
-    .pub-item {
-      margin-bottom: 10px;
-    }
-
-    .pub-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .pub-title {
-      font-weight: 600;
-      color: #1f2937;
-      font-size: 9.5pt;
-    }
-
-    .pub-venue {
-      font-size: 9pt;
-      color: #6b7280;
-      font-style: italic;
-    }
-
-    /* Print Styles */
-    @page {
-      margin: 0;
-    }
+    @page { margin: 14mm; }
 
     @media print {
       body {
-        padding: 20px 25px;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      .header-avatar {
-        background: #dbeafe !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      .section {
-        page-break-inside: auto;
-      }
-
-      .entry {
-        page-break-inside: avoid;
-      }
-
-      .section-title {
-        page-break-after: avoid;
-      }
-
-      .skill-tag {
-        background: #f3f4f6 !important;
+        padding: 0;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
@@ -417,255 +436,9 @@ export function generatePrintableCV(cv: CVData): string {
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
-    <div class="header-left">
-      <h1 class="header-name">${cv.fullName.toUpperCase()}</h1>
-      <p class="header-role">${cv.preferredRole}</p>
-      <div class="header-contact">
-        ${cv.email ? `
-        <span class="contact-item">
-          ${cv.email}
-        </span>
-        ` : ''}
-        ${cv.phone ? `
-        <span class="contact-item">
-          ${cv.phone}
-        </span>
-        ` : ''}
-        <span class="contact-item">
-          <span class="contact-icon">&#128205;</span>
-          ${cv.city}
-        </span>
-      </div>
-    </div>
-    <div class="header-avatar">${initials}</div>
-  </header>
-
-  <!-- Main Content -->
-  <div class="main-content">
-    <!-- Left Column -->
-    <div class="left-column">
-      ${cv.bio ? `
-      <section class="section">
-        <div class="section-header-group">
-          <h2 class="section-title">Summary</h2>
-          <p class="summary-text">${cv.bio}</p>
-        </div>
-      </section>
-      ` : ''}
-
-      ${cv.experience.length > 0 ? `
-      <section class="section">
-        <div class="section-header-group">
-          <h2 class="section-title">Experience</h2>
-          ${(() => {
-            const exp = cv.experience[0];
-            const descLines = exp.description ? exp.description.split(/[•\n]/).filter(line => line.trim()) : [];
-            const hasBullets = descLines.length > 1;
-            return `
-            <div class="entry">
-              <h3 class="entry-title">${exp.title}</h3>
-              <p class="entry-company">${exp.company}</p>
-              <div class="entry-meta">
-                <span class="meta-item">
-                  <span class="meta-icon">&#128197;</span>
-                  ${exp.startDate}${exp.endDate ? ` - ${exp.endDate}` : ' - Present'}
-                </span>
-                ${exp.location ? `
-                <span class="meta-item">
-                  <span class="meta-icon">&#128205;</span>
-                  ${exp.location}
-                </span>
-                ` : ''}
-              </div>
-              ${exp.description ? `
-              <div class="entry-description">
-                ${hasBullets ? `
-                <ul>
-                  ${descLines.map(line => `<li>${line.trim()}</li>`).join('')}
-                </ul>
-                ` : `<p>${exp.description}</p>`}
-              </div>
-              ` : ''}
-            </div>
-            `;
-          })()}
-        </div>
-        ${cv.experience.slice(1).map(exp => {
-          const descLines = exp.description ? exp.description.split(/[•\n]/).filter(line => line.trim()) : [];
-          const hasBullets = descLines.length > 1;
-
-          return `
-          <div class="entry">
-            <h3 class="entry-title">${exp.title}</h3>
-            <p class="entry-company">${exp.company}</p>
-            <div class="entry-meta">
-              <span class="meta-item">
-                <span class="meta-icon">&#128197;</span>
-                ${exp.startDate}${exp.endDate ? ` - ${exp.endDate}` : ' - Present'}
-              </span>
-              ${exp.location ? `
-              <span class="meta-item">
-                <span class="meta-icon">&#128205;</span>
-                ${exp.location}
-              </span>
-              ` : ''}
-            </div>
-            ${exp.description ? `
-            <div class="entry-description">
-              ${hasBullets ? `
-              <ul>
-                ${descLines.map(line => `<li>${line.trim()}</li>`).join('')}
-              </ul>
-              ` : `<p>${exp.description}</p>`}
-            </div>
-            ` : ''}
-          </div>
-          `;
-        }).join('')}
-      </section>
-      ` : ''}
-
-      ${cv.education.length > 0 ? `
-      <section class="section">
-        <div class="section-header-group">
-          <h2 class="section-title">Education</h2>
-          <div class="entry">
-            <h3 class="entry-title">${cv.education[0].degree}</h3>
-            <p class="entry-company">${cv.education[0].institution}</p>
-            <div class="entry-meta">
-              <span class="meta-item">
-                <span class="meta-icon">&#128197;</span>
-                ${cv.education[0].year}
-              </span>
-              ${cv.education[0].location ? `
-              <span class="meta-item">
-                <span class="meta-icon">&#128205;</span>
-                ${cv.education[0].location}
-              </span>
-              ` : ''}
-            </div>
-          </div>
-        </div>
-        ${cv.education.slice(1).map(edu => `
-        <div class="entry">
-          <h3 class="entry-title">${edu.degree}</h3>
-          <p class="entry-company">${edu.institution}</p>
-          <div class="entry-meta">
-            <span class="meta-item">
-              <span class="meta-icon">&#128197;</span>
-              ${edu.year}
-            </span>
-            ${edu.location ? `
-            <span class="meta-item">
-              <span class="meta-icon">&#128205;</span>
-              ${edu.location}
-            </span>
-            ` : ''}
-          </div>
-        </div>
-        `).join('')}
-      </section>
-      ` : ''}
-    </div>
-
-    ${hasRightContent ? `
-    <!-- Right Column -->
-    <div class="right-column">
-      ${cv.skills.length > 0 ? `
-      <section class="section">
-        <div class="section-header-group">
-          <h2 class="section-title">Skills</h2>
-          <ul class="skills-list">
-            ${cv.skills.slice(0, 3).map(skill => `<li class="skill-tag">${skill}</li>`).join('')}
-          </ul>
-        </div>
-        ${cv.skills.length > 3 ? `
-        <ul class="skills-list" style="margin-top: 6px;">
-          ${cv.skills.slice(3).map(skill => `<li class="skill-tag">${skill}</li>`).join('')}
-        </ul>
-        ` : ''}
-      </section>
-      ` : ''}
-
-      ${cv.languages.length > 0 ? `
-      <section class="section">
-        <div class="section-header-group">
-          <h2 class="section-title">Languages</h2>
-          <div class="language-item">
-            <span class="language-name">${cv.languages[0].language}</span>
-            <span class="language-level">${cv.languages[0].proficiency}</span>
-          </div>
-        </div>
-        ${cv.languages.slice(1).map(lang => `
-        <div class="language-item">
-          <span class="language-name">${lang.language}</span>
-          <span class="language-level">${lang.proficiency}</span>
-        </div>
-        `).join('')}
-      </section>
-      ` : ''}
-
-      ${cv.certifications.length > 0 ? `
-      <section class="section">
-        <div class="section-header-group">
-          <h2 class="section-title">Certifications</h2>
-          <div class="cert-item">
-            <p class="cert-name">${cv.certifications[0].name}</p>
-            <p class="cert-meta">${cv.certifications[0].issuer} (${cv.certifications[0].year})</p>
-          </div>
-        </div>
-        ${cv.certifications.slice(1).map(cert => `
-        <div class="cert-item">
-          <p class="cert-name">${cert.name}</p>
-          <p class="cert-meta">${cert.issuer} (${cert.year})</p>
-        </div>
-        `).join('')}
-      </section>
-      ` : ''}
-
-      ${cv.projects.length > 0 ? `
-      <section class="section">
-        <div class="section-header-group">
-          <h2 class="section-title">Projects</h2>
-          <div class="project-item">
-            <p class="project-name">${cv.projects[0].name}</p>
-            ${cv.projects[0].description ? `<p class="project-desc">${cv.projects[0].description}</p>` : ''}
-            ${cv.projects[0].link ? `<a href="${cv.projects[0].link}" class="project-link">${cv.projects[0].link}</a>` : ''}
-          </div>
-        </div>
-        ${cv.projects.slice(1).map(proj => `
-        <div class="project-item">
-          <p class="project-name">${proj.name}</p>
-          ${proj.description ? `<p class="project-desc">${proj.description}</p>` : ''}
-          ${proj.link ? `<a href="${proj.link}" class="project-link">${proj.link}</a>` : ''}
-        </div>
-        `).join('')}
-      </section>
-      ` : ''}
-
-      ${cv.publications.length > 0 ? `
-      <section class="section">
-        <div class="section-header-group">
-          <h2 class="section-title">Publications</h2>
-          <div class="pub-item">
-            <p class="pub-title">${cv.publications[0].title}</p>
-            <p class="pub-venue">${cv.publications[0].venue}</p>
-            ${cv.publications[0].link ? `<a href="${cv.publications[0].link}" class="project-link">${cv.publications[0].link}</a>` : ''}
-          </div>
-        </div>
-        ${cv.publications.slice(1).map(pub => `
-        <div class="pub-item">
-          <p class="pub-title">${pub.title}</p>
-          <p class="pub-venue">${pub.venue}</p>
-          ${pub.link ? `<a href="${pub.link}" class="project-link">${pub.link}</a>` : ''}
-        </div>
-        `).join('')}
-      </section>
-      ` : ''}
-    </div>
-    ` : ''}
+  <div class="cv">
+    ${leftColumn}
+    ${rightColumn}
   </div>
 </body>
 </html>
@@ -687,11 +460,11 @@ export function downloadCVAsPDF(cv: CVData): void {
   printWindow.document.write(printContent);
   printWindow.document.close();
 
-  // Wait for content to load then trigger print
+  // Wait for content (and web fonts) to load, then trigger print.
   printWindow.onload = () => {
     setTimeout(() => {
       printWindow.print();
-    }, 250);
+    }, 400);
   };
 }
 

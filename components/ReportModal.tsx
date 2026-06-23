@@ -20,7 +20,6 @@ export default function ReportModal({
   isOpen,
   onClose,
   targetType,
-  targetId,
   targetName,
 }: ReportModalProps) {
   const [reason, setReason] = useState<ReportReason | "">("");
@@ -136,7 +135,7 @@ export default function ReportModal({
         <form onSubmit={handleSubmit}>
           <fieldset style={{ border: "none", padding: 0, margin: "1rem 0" }}>
             <legend style={{ fontWeight: 500, marginBottom: "0.5rem" }}>
-              What's the issue?
+              What&apos;s the issue?
             </legend>
 
             {REPORT_REASONS.map((option) => (

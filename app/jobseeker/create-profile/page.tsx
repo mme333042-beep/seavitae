@@ -336,11 +336,10 @@ export default function CreateProfilePage() {
     const phone = phoneNumber ? `${countryCode}-${phoneNumber.replace(/^0+/, '')}` : null;
 
     try {
-      let jobseekerId = existingJobseekerId;
       let cvId = existingCVId;
 
       // Parse form data into CV sections first
-      const experienceItems = experiences.map((exp, index) => ({
+      const experienceItems = experiences.map((exp) => ({
         id: exp.id,
         title: formData.get(`experienceTitle${exp.id}`) as string || "",
         company: formData.get(`experienceCompany${exp.id}`) as string || "",
@@ -431,7 +430,7 @@ export default function CreateProfilePage() {
             console.log(`[CV Save] Summary enhanced via ${aiData.method}`);
           }
         }
-      } catch (aiError) {
+      } catch {
         // AI failed silently - use regex-enhanced version
         console.warn('[CV Save] AI enhancement failed, using regex fallback');
       }
@@ -460,7 +459,7 @@ export default function CreateProfilePage() {
                 console.log(`[CV Save] Experience ${i + 1} enhanced via AI`);
               }
             }
-          } catch (aiError) {
+          } catch {
             // AI failed silently - keep regex-enhanced version
             console.warn(`[CV Save] Experience ${i + 1} AI enhancement failed`);
           }
@@ -484,8 +483,6 @@ export default function CreateProfilePage() {
           setSaving(false);
           return;
         }
-
-        jobseekerId = result.jobseeker?.id || null;
 
         // Get the newly created CV
         const cvData = await getMyCV();

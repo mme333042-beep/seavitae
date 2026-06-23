@@ -321,17 +321,15 @@ nav a:hover {
   list-style: none;
   margin: 0;
   padding: 0;
-  height: 36px;
 }
 
 .site-header .nav-links li {
   display: flex;
   align-items: center;
-  height: 100%;
 }
 
 .site-header .nav-links a {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   color: var(--sv-muted);
   font-weight: 500;
@@ -344,6 +342,21 @@ nav a:hover {
 .site-header .nav-links a:hover {
   color: var(--sv-ocean);
   text-decoration: none;
+}
+
+/* Primary "Create CV" action in the header */
+.site-header .nav-links a.nav-cta {
+  padding: var(--space-sm) var(--space-lg);
+  background-color: var(--sv-ocean);
+  color: var(--sv-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+}
+
+.site-header .nav-links a.nav-cta:hover {
+  background-color: var(--sv-ocean-dark);
+  color: var(--sv-white);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Header Navigation (Dashboard) */
@@ -1158,7 +1171,7 @@ details[open] summary {
    ========================= */
 #hero {
   text-align: center;
-  padding: var(--space-3xl) var(--space-xl) var(--space-2xl);
+  padding: var(--space-2xl) var(--space-xl) var(--space-3xl);
   border-bottom: none;
 }
 
@@ -1169,28 +1182,18 @@ details[open] summary {
   letter-spacing: var(--tracking-tight);
 }
 
-.tagline {
-  font-size: var(--text-xl);
-  color: var(--sv-muted);
-  font-style: italic;
-  margin-bottom: var(--space-2xl);
-}
-
-.hero-descriptions {
-  max-width: 36rem;
+.hero-subtitle {
+  max-width: 40rem;
   margin: 0 auto var(--space-2xl);
-  text-align: center;
-}
-
-.hero-descriptions p {
   font-size: var(--text-lg);
-  margin-bottom: var(--space-lg);
   line-height: var(--leading-relaxed);
   color: var(--sv-muted);
 }
 
-.hero-descriptions p:last-child {
-  margin-bottom: 0;
+.hero-note {
+  margin-top: var(--space-lg);
+  font-size: var(--text-sm);
+  color: var(--sv-light);
 }
 
 .hero-cta {
@@ -1232,6 +1235,18 @@ details[open] summary {
 .hero-cta a:last-child:hover {
   background-color: var(--sv-cream);
   box-shadow: var(--shadow-md);
+}
+
+/* A lone hero CTA always reads as the primary (filled) action */
+.hero-cta a:only-child {
+  background-color: var(--sv-ocean);
+  color: var(--sv-white);
+  border: none;
+  box-shadow: var(--shadow-md);
+}
+
+.hero-cta a:only-child:hover {
+  background-color: var(--sv-ocean-dark);
 }
 
 /* =========================
@@ -1302,6 +1317,92 @@ details[open] summary {
   background-color: var(--sv-white);
   color: var(--sv-ocean);
   border: 1px solid var(--sv-ocean);
+}
+
+/* A lone final CTA always reads as the primary (filled) action */
+.cta-buttons a:only-child {
+  background-color: var(--sv-ocean);
+  color: var(--sv-white);
+  border: none;
+}
+
+.cta-buttons a:only-child:hover {
+  background-color: var(--sv-ocean-dark);
+}
+
+/* =========================
+   Landing: How It Works steps
+   ========================= */
+.steps-grid,
+.feature-grid {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.steps-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.feature-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 768px) {
+  .steps-grid,
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step-card {
+  background-color: var(--sv-white);
+  border: 1px solid var(--sv-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-xs);
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  background-color: var(--sv-ocean);
+  color: var(--sv-white);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-md);
+}
+
+.step-card h3 {
+  margin-bottom: var(--space-sm);
+}
+
+.step-card p,
+.feature-grid .card p {
+  color: var(--sv-muted);
+  margin: 0;
+}
+
+/* =========================
+   CV Document Preview (mirrors the downloadable PDF)
+   ========================= */
+.cv-document {
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.cv-document-frame {
+  display: block;
+  width: 100%;
+  min-height: 600px;
+  border: 1px solid var(--sv-border);
+  border-radius: var(--radius-md);
+  background-color: var(--sv-white);
+  box-shadow: var(--shadow-md);
 }
 
 /* =========================

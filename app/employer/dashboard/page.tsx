@@ -43,18 +43,19 @@ function jobseekerToPreview(js: Jobseeker): CVPreviewWithDate {
 // Component to handle search params (must be wrapped in Suspense)
 function UpdateSuccessMessage() {
   const searchParams = useSearchParams();
-  const [showUpdateSuccess, setShowUpdateSuccess] = useState(false);
+  // Derive the initial banner state during render (pure) instead of setting it inside an effect
+  const wasUpdated = searchParams.get("updated") === "true";
+  const [showUpdateSuccess, setShowUpdateSuccess] = useState(wasUpdated);
 
   useEffect(() => {
-    if (searchParams.get("updated") === "true") {
-      setShowUpdateSuccess(true);
+    if (wasUpdated) {
       // Clear the query param from URL without refresh
       window.history.replaceState({}, "", "/employer/dashboard");
       // Auto-hide after 5 seconds
       const timer = setTimeout(() => setShowUpdateSuccess(false), 5000);
       return () => clearTimeout(timer);
     }
-  }, [searchParams]);
+  }, [wasUpdated]);
 
   if (!showUpdateSuccess) return null;
 

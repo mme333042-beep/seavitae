@@ -169,8 +169,7 @@ export async function POST(request: NextRequest) {
 
             if (action === 'approve') {
               const emailTemplate = getEmployerApprovedEmailTemplate(
-                employerName,
-                employer.employer_type as 'individual' | 'company'
+                employerName
               )
               const emailResult = await sendEmail({
                 to: user.email,

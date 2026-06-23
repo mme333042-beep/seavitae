@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, use } from "react";
 import ReportButton from "@/components/ReportButton";
+import CVDocument from "@/components/CVDocument";
 import { formatLastUpdated } from "@/lib/cvState";
 import { getCurrentUserWithProfile } from "@/lib/supabase/auth";
 import { getJobseekerCV } from "@/lib/supabase/services/jobseekers";
@@ -267,170 +268,11 @@ export default function CVProfilePage({ params }: CVProfilePageProps) {
         </div>
       )}
 
-      {/* CV Header */}
-      <header className="cv-profile-header">
-        <h1>{cv.fullName}</h1>
-        <div className="cv-profile-meta">
-          <span>{cv.city}</span>
-          <span>{cv.preferredRole}</span>
-        </div>
-        <p className="last-updated">
-          Last updated: {formatLastUpdated(cv.lastUpdated)}
-        </p>
-      </header>
-
-      {/* Professional Summary */}
-      {cv.bio && (
-        <section aria-label="Professional Summary">
-          <h2>Professional Summary</h2>
-          <div className="card">
-            <p>{cv.bio}</p>
-          </div>
-        </section>
-      )}
-
-      {/* Skills - Before Experience */}
-      {cv.skills.length > 0 && (
-        <section aria-label="Skills">
-          <h2>Skills</h2>
-          <div className="card">
-            <div className="cv-preview-card">
-              <div className="skills">
-                {cv.skills.map((skill, index) => (
-                  <span key={index} className="skill-tag">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Experience */}
-      {cv.experience.length > 0 && (
-        <section aria-label="Experience">
-          <h2>Experience</h2>
-          <div className="card">
-            {cv.experience.map((exp, index) => (
-              <article key={index}>
-                <h3>{exp.title}</h3>
-                <p>
-                  <strong>{exp.company}</strong>
-                </p>
-                <p className="form-help">
-                  {exp.location} | {exp.startDate} - {exp.endDate}
-                </p>
-                <p style={{ marginTop: "var(--space-sm)" }}>{exp.description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Education */}
-      {cv.education.length > 0 && (
-        <section aria-label="Education">
-          <h2>Education</h2>
-          <div className="card">
-            {cv.education.map((edu, index) => (
-              <article key={index}>
-                <h3>{edu.degree}</h3>
-                <p>{edu.institution}</p>
-                <p className="form-help">
-                  {edu.location} | {edu.year}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Languages */}
-      {cv.languages.length > 0 && (
-        <section aria-label="Languages">
-          <h2>Languages</h2>
-          <div className="card">
-            <ul>
-              {cv.languages.map((lang, index) => (
-                <li key={index}>
-                  <strong>{lang.language}</strong> - {lang.proficiency}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
-
-      {/* Certifications */}
-      {cv.certifications.length > 0 && (
-        <section aria-label="Certifications">
-          <h2>Certifications</h2>
-          <div className="card">
-            <ul>
-              {cv.certifications.map((cert, index) => (
-                <li key={index}>
-                  <strong>{cert.name}</strong> - {cert.issuer} ({cert.year})
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
-
-      {/* Projects */}
-      {cv.projects.length > 0 && (
-        <section aria-label="Projects">
-          <h2>Projects</h2>
-          <div className="card">
-            {cv.projects.map((project, index) => (
-              <article key={index}>
-                <h3>{project.name}</h3>
-                <p>{project.description}</p>
-                {project.link && (
-                  <p>
-                    <a
-                      href={project.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View Project
-                    </a>
-                  </p>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Publications */}
-      {cv.publications.length > 0 && (
-        <section aria-label="Publications">
-          <h2>Publications</h2>
-          <div className="card">
-            <ul>
-              {cv.publications.map((pub, index) => (
-                <li key={index}>
-                  {pub.link ? (
-                    <a
-                      href={pub.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {pub.title} - {pub.venue}
-                    </a>
-                  ) : (
-                    <>
-                      {pub.title} - {pub.venue}
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
+      {/* CV Document (same layout as the downloadable PDF) */}
+      <p className="last-updated" style={{ marginBottom: "var(--space-md)" }}>
+        Last updated: {formatLastUpdated(cv.lastUpdated)}
+      </p>
+      <CVDocument cv={cv} />
 
       {/* Employer Actions - At Bottom */}
       {isEmployer && (

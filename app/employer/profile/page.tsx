@@ -178,8 +178,8 @@ export default function EmployerProfilePage() {
               <strong>Details pending</strong>
             </p>
             <p>
-              Complete your profile details to display a "Verified details"
-              badge to jobseekers.
+              Complete your profile details to display a &quot;Verified
+              details&quot; badge to jobseekers.
             </p>
 
             {status.missingFields.length > 0 && (
@@ -298,7 +298,7 @@ export default function EmployerProfilePage() {
         <h2>About Verification</h2>
         <div className="card">
           <p>
-            The "Verified details" status indicates that you have completed your
+            The &quot;Verified details&quot; status indicates that you have completed your
             employer profile information. This helps jobseekers understand who is
             contacting them.
           </p>

@@ -88,7 +88,7 @@ function calculateRelevanceScore(
   }
 
   let matchCount = 0;
-  let totalPossibleMatches = searchTerms.length * 3; // 3 fields to match against
+  const totalPossibleMatches = searchTerms.length * 3; // 3 fields to match against
 
   const roleLower = profile.preferredRole.toLowerCase();
   const skillsLower = profile.skills.map((s) => s.toLowerCase());

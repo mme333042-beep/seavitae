@@ -23,7 +23,7 @@ function AuthListenerInner() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event) => {
       console.log("[AuthListener] Auth event:", event);
 
       // Handle password recovery event

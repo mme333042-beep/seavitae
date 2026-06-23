@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../client'
-import type { Message, MessageInsert, User } from '../types'
+import type { Message, User } from '../types'
 
 // Send a message
 export async function sendMessage(

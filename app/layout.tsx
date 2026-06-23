@@ -15,12 +15,12 @@ export const metadata: Metadata = {
     default: "SeaVitae",
     template: "%s | SeaVitae",
   },
-  description: "A sea of careers, searchable. For Employers: Find top talent by searching CVs directly. For Jobseekers: Create your CV and get discovered.",
+  description: "Build a clean, professional, ATS-friendly CV online for free. Add your details, let AI polish the wording, and download a recruiter-ready PDF in minutes.",
   metadataBase: new URL("https://seavitae.com"),
 
   openGraph: {
-    title: "SeaVitae",
-    description: "A sea of careers, searchable.",
+    title: "SeaVitae — Create an ATS-Friendly CV Online",
+    description: "Build a clean, professional, ATS-friendly CV online for free in minutes.",
     url: "https://seavitae.com",
     siteName: "SeaVitae",
     images: [
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "SeaVitae – A sea of careers, searchable",
+        alt: "SeaVitae – Create an ATS-friendly CV online",
       },
     ],
     type: "website",
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "SeaVitae",
-    description: "A sea of careers, searchable.",
+    title: "SeaVitae — Create an ATS-Friendly CV Online",
+    description: "Build a clean, professional, ATS-friendly CV online for free in minutes.",
     images: ["/og-image.png"],
   },
 

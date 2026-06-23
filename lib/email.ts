@@ -191,11 +191,8 @@ export function getInterviewRequestEmailTemplate(
 }
 
 export function getEmployerApprovedEmailTemplate(
-  employerName: string,
-  employerType: 'individual' | 'company'
+  employerName: string
 ): { subject: string; html: string } {
-  const baseUrl = getBaseUrl();
-
   return {
     subject: 'Your SeaVitae Account Has Been Approved! 🎉',
     html: `
@@ -247,8 +244,6 @@ export function getEmployerRejectedEmailTemplate(
   employerName: string,
   rejectionReason: string
 ): { subject: string; html: string } {
-  const baseUrl = getBaseUrl();
-
   return {
     subject: 'Update on Your SeaVitae Account Application',
     html: `

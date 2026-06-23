@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getEmployerForReview } from "@/lib/supabase/admin";
 import type { Employer, VerificationStatus } from "@/lib/supabase/types";
@@ -11,7 +11,6 @@ interface EmployerWithEmail extends Employer {
 }
 
 export default function VerifyEmployerPage() {
-  const router = useRouter();
   const params = useParams();
   const employerId = params.id as string;
 

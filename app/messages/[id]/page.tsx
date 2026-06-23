@@ -18,7 +18,7 @@ import {
 import MessageThread from "@/components/MessageThread";
 import MessageCompose from "@/components/MessageCompose";
 import ReportButton from "@/components/ReportButton";
-import type { Message as DBMessage, User, UserRole } from "@/lib/supabase/types";
+import type { UserRole } from "@/lib/supabase/types";
 import type { ParticipantRole, Message as UIMessage } from "@/lib/messaging";
 
 interface OtherUser {

@@ -62,7 +62,6 @@ export default function EditCompanyProfilePage() {
     const companySize = formData.get("companySize") as string;
     const website = formData.get("website") as string;
     const registrationNumber = formData.get("registrationNumber") as string;
-    const contactRole = formData.get("contactRole") as string;
     const contactPhone = formData.get("contactPhone") as string;
     const companyCity = formData.get("companyCity") as string;
 

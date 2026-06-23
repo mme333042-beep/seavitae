@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
-import { getCurrentUser, getCurrentUserWithProfile } from "@/lib/supabase/auth";
+import { getCurrentUser } from "@/lib/supabase/auth";
 import { createEmployerProfile, getMyEmployerProfile } from "@/lib/supabase/services/employers";
 
 export default function CompanyDetailsPage() {
