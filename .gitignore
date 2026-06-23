@@ -43,5 +43,9 @@ next-env.d.ts
 # claude local settings
 .claude/
 
+# claude session artifacts / stray files
+tmpclaude-*
+nul
+
 # backend folder (Express - not used in Vercel)
 backend/

@@ -1,39 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Create CV for Free Online | SeaVitae",
-  description: "Create a professional, ATS-friendly CV for free online. No experience required. Build your CV in minutes and get discovered by top employers on SeaVitae.",
+  description: "Create a professional, ATS-friendly CV for free online. No experience required. Build your CV in minutes and download a recruiter-ready PDF.",
 };
 
 export default function CreateCVForFreePage() {
   return (
     <>
-      <header className="site-header">
-        <nav>
-          <Link href="/" className="logo-link">
-            <Image
-              src="/logo/seavitae-logo.png"
-              alt="SeaVitae"
-              width={140}
-              height={36}
-              priority
-            />
-          </Link>
-          <ul className="nav-links">
-            <li>
-              <Link href="/about">About Us</Link>
-            </li>
-            <li>
-              <Link href="/get-started">Get Started</Link>
-            </li>
-            <li>
-              <Link href="/login">Login</Link>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main>
         <header>
@@ -110,10 +88,9 @@ export default function CreateCVForFreePage() {
           </p>
 
           <p>
-            <strong>Step 4 — Review and go live.</strong> Once your CV is
-            complete, toggle your visibility to &quot;on&quot; and employers
-            searching for your skills will be able to find and view your profile
-            directly.
+            <strong>Step 4 — Review and download.</strong> Once your CV is
+            complete, preview it, make any final edits, and download a clean,
+            ATS-friendly PDF that is ready to send to any employer.
           </p>
 
           <h2>Tips for Writing a Strong CV</h2>
@@ -156,14 +133,14 @@ export default function CreateCVForFreePage() {
           <p>
             SeaVitae is built for professionals across all sectors. Whether you
             work in maritime, engineering, finance, healthcare, technology, or
-            administration — you can create a professional CV for free and get
-            discovered by employers actively looking for your skills.
+            administration — you can create a professional, ATS-friendly CV for
+            free in minutes.
           </p>
 
           <p>
-            Our platform is particularly focused on connecting Nigerian
-            professionals with legitimate employers. No spam, no fake job posts,
-            no noise — just real employers searching for real talent.
+            Our builder is designed with Nigerian professionals in mind, using
+            clean structure and clear language that works for local and
+            international applications alike.
           </p>
 
           <h2>Download Your CV Anytime</h2>
@@ -179,9 +156,8 @@ export default function CreateCVForFreePage() {
 
           <p>
             There is no better time to take your career seriously. Create a free
-            account on SeaVitae, build your ATS-friendly CV, and start being
-            discovered by employers who are actively searching for professionals
-            like you.
+            account on SeaVitae, build your ATS-friendly CV, and download a
+            polished PDF you can send to any employer.
           </p>
 
           <p>
@@ -192,28 +168,14 @@ export default function CreateCVForFreePage() {
 
         <section id="cta">
           <h2>Create Your Free CV Now</h2>
-          <p>Join SeaVitae and get discovered by employers looking for your skills.</p>
+          <p>Build a professional, ATS-friendly CV in minutes — completely free.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker/signup">Create Free CV</Link>
-            <Link href="/get-started">Learn More</Link>
+            <Link href="/jobseeker">Create My Free CV</Link>
           </div>
         </section>
       </main>
 
-      <footer>
-        <p>SeaVitae</p>
-        <p>A sea of careers, searchable.</p>
-        <nav>
-          <ul>
-            <li>
-              <Link href="/terms">Terms of Service</Link>
-            </li>
-            <li>
-              <Link href="/privacy">Privacy Policy</Link>
-            </li>
-          </ul>
-        </nav>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

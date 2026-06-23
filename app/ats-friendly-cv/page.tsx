@@ -1,39 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "ATS-Friendly CV Builder Online | SeaVitae",
-  description: "Build an ATS-friendly CV that passes automated filters and gets seen by real employers. Free online CV builder designed to beat applicant tracking systems.",
+  description: "Build an ATS-friendly CV that passes automated filters and gets seen by recruiters. Free online CV builder designed to beat applicant tracking systems.",
 };
 
 export default function ATSFriendlyCVPage() {
   return (
     <>
-      <header className="site-header">
-        <nav>
-          <Link href="/" className="logo-link">
-            <Image
-              src="/logo/seavitae-logo.png"
-              alt="SeaVitae"
-              width={140}
-              height={36}
-              priority
-            />
-          </Link>
-          <ul className="nav-links">
-            <li>
-              <Link href="/about">About Us</Link>
-            </li>
-            <li>
-              <Link href="/get-started">Get Started</Link>
-            </li>
-            <li>
-              <Link href="/login">Login</Link>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main>
         <header>
@@ -185,17 +163,16 @@ export default function ATSFriendlyCVPage() {
           <h2>ATS-Friendly CVs on SeaVitae</h2>
 
           <p>
-            When you create your CV on SeaVitae, you are not just building a
-            document. You are creating a live, searchable professional profile
-            that employers on our platform can find directly — without you having
-            to apply for a single job posting.
+            When you create your CV on SeaVitae, every section is structured the
+            way applicant tracking systems expect — so your experience, skills,
+            and qualifications are parsed correctly every time, not lost to bad
+            formatting.
           </p>
 
           <p>
-            Our platform removes the ATS bottleneck entirely for employers who
-            use SeaVitae, because they search and discover professionals directly
-            rather than filtering through mass applications. But your
-            downloadable CV is also fully ATS-optimised for use anywhere else.
+            Your finished CV downloads as a clean, ATS-optimised PDF that you can
+            send to any employer, job board, or application portal with
+            confidence.
           </p>
 
           <h2>Build Your ATS-Friendly CV for Free</h2>
@@ -207,35 +184,22 @@ export default function ATSFriendlyCVPage() {
           </p>
 
           <p>
-            Sign up, complete your profile, and start getting discovered by
-            employers who are actively looking for professionals with your skills.
+            Sign up, fill in your details, and let our AI sharpen the wording.
+            In minutes you will have a polished, ATS-friendly CV ready to send
+            anywhere.
           </p>
         </section>
 
         <section id="cta">
           <h2>Build Your ATS-Friendly CV</h2>
-          <p>Free, structured, and built to get you discovered.</p>
+          <p>Free, structured, and built to beat the bots.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker/signup">Create Free CV</Link>
-            <Link href="/get-started">Learn More</Link>
+            <Link href="/jobseeker">Create My Free CV</Link>
           </div>
         </section>
       </main>
 
-      <footer>
-        <p>SeaVitae</p>
-        <p>A sea of careers, searchable.</p>
-        <nav>
-          <ul>
-            <li>
-              <Link href="/terms">Terms of Service</Link>
-            </li>
-            <li>
-              <Link href="/privacy">Privacy Policy</Link>
-            </li>
-          </ul>
-        </nav>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

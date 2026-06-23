@@ -1,39 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "CV for Fresh Graduates | SeaVitae",
-  description: "Create a professional CV as a fresh graduate with no experience. Free online CV builder for entry-level jobseekers in Nigeria. Get discovered by real employers.",
+  description: "Create a professional CV as a fresh graduate with no experience. Free online CV builder for entry-level jobseekers in Nigeria. Download a recruiter-ready PDF in minutes.",
 };
 
 export default function CVForFreshGraduatesPage() {
   return (
     <>
-      <header className="site-header">
-        <nav>
-          <Link href="/" className="logo-link">
-            <Image
-              src="/logo/seavitae-logo.png"
-              alt="SeaVitae"
-              width={140}
-              height={36}
-              priority
-            />
-          </Link>
-          <ul className="nav-links">
-            <li>
-              <Link href="/about">About Us</Link>
-            </li>
-            <li>
-              <Link href="/get-started">Get Started</Link>
-            </li>
-            <li>
-              <Link href="/login">Login</Link>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main>
         <header>
@@ -191,20 +169,19 @@ export default function CVForFreshGraduatesPage() {
             in how relevant your CV appears.
           </p>
 
-          <h2>Getting Discovered as a Fresh Graduate</h2>
+          <h2>Standing Out as a Fresh Graduate</h2>
 
           <p>
-            On SeaVitae, fresh graduates have a real opportunity to be discovered
-            by employers who are actively looking for new talent. You do not need
-            years of experience to build a compelling profile. You need a clear,
-            honest CV that shows who you are and what you are capable of.
+            As a fresh graduate, a clear, well-structured CV is your biggest
+            advantage. You do not need years of experience to make a strong
+            impression — you need a CV that shows who you are and what you are
+            capable of.
           </p>
 
           <p>
             Create your free SeaVitae account, build your CV using our structured
-            format, and turn on your visibility. Employers searching for
-            entry-level professionals in your field will be able to find you
-            directly — no job applications, no waiting.
+            format, and download a polished, ATS-friendly PDF you can send with
+            every application.
           </p>
 
           <h2>Start Your Career With a Professional CV</h2>
@@ -216,34 +193,21 @@ export default function CVForFreshGraduatesPage() {
           </p>
 
           <p>
-            Build your CV today and take control of how employers find you.
+            Build your CV today and put your best foot forward with every
+            application.
           </p>
         </section>
 
         <section id="cta">
           <h2>Build Your Graduate CV for Free</h2>
-          <p>Start strong. Get discovered by employers looking for fresh talent.</p>
+          <p>Start strong with a clean, professional, ATS-friendly CV.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker/signup">Create Free CV</Link>
-            <Link href="/get-started">Learn More</Link>
+            <Link href="/jobseeker">Create My Free CV</Link>
           </div>
         </section>
       </main>
 
-      <footer>
-        <p>SeaVitae</p>
-        <p>A sea of careers, searchable.</p>
-        <nav>
-          <ul>
-            <li>
-              <Link href="/terms">Terms of Service</Link>
-            </li>
-            <li>
-              <Link href="/privacy">Privacy Policy</Link>
-            </li>
-          </ul>
-        </nav>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "10 CV Mistakes That Are Costing You the Job | SeaVitae Blog",
@@ -10,30 +11,7 @@ export const metadata: Metadata = {
 export default function CVMistakesToAvoidPage() {
   return (
     <>
-      <header className="site-header">
-        <nav>
-          <Link href="/" className="logo-link">
-            <Image
-              src="/logo/seavitae-logo.png"
-              alt="SeaVitae"
-              width={140}
-              height={36}
-              priority
-            />
-          </Link>
-          <ul className="nav-links">
-            <li>
-              <Link href="/about">About Us</Link>
-            </li>
-            <li>
-              <Link href="/get-started">Get Started</Link>
-            </li>
-            <li>
-              <Link href="/login">Login</Link>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main>
         <header>
@@ -312,20 +290,7 @@ export default function CVMistakesToAvoidPage() {
         </section>
       </main>
 
-      <footer>
-        <p>SeaVitae</p>
-        <p>A sea of careers, searchable.</p>
-        <nav>
-          <ul>
-            <li>
-              <Link href="/terms">Terms of Service</Link>
-            </li>
-            <li>
-              <Link href="/privacy">Privacy Policy</Link>
-            </li>
-          </ul>
-        </nav>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

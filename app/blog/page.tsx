@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Career & CV Advice Blog | SeaVitae",
@@ -34,30 +35,7 @@ const posts = [
 export default function BlogPage() {
   return (
     <>
-      <header className="site-header">
-        <nav>
-          <Link href="/" className="logo-link">
-            <Image
-              src="/logo/seavitae-logo.png"
-              alt="SeaVitae"
-              width={140}
-              height={36}
-              priority
-            />
-          </Link>
-          <ul className="nav-links">
-            <li>
-              <Link href="/about">About Us</Link>
-            </li>
-            <li>
-              <Link href="/get-started">Get Started</Link>
-            </li>
-            <li>
-              <Link href="/login">Login</Link>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main>
         <header>
@@ -67,7 +45,7 @@ export default function BlogPage() {
         <section className="about-content">
           <p>
             Practical guides to help Nigerian professionals write better CVs,
-            pass ATS filters, and get discovered by the right employers.
+            pass ATS filters, and land more interviews.
           </p>
 
           {posts.map((post) => (
@@ -88,26 +66,12 @@ export default function BlogPage() {
           <h2>Ready to Build Your CV?</h2>
           <p>Put the advice into action. Create your free ATS-friendly CV on SeaVitae.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker/signup">Create Free CV</Link>
-            <Link href="/get-started">Learn More</Link>
+            <Link href="/jobseeker">Create My Free CV</Link>
           </div>
         </section>
       </main>
 
-      <footer>
-        <p>SeaVitae</p>
-        <p>A sea of careers, searchable.</p>
-        <nav>
-          <ul>
-            <li>
-              <Link href="/terms">Terms of Service</Link>
-            </li>
-            <li>
-              <Link href="/privacy">Privacy Policy</Link>
-            </li>
-          </ul>
-        </nav>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

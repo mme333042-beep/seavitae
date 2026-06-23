@@ -1,39 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Professional CV Template Online | SeaVitae",
-  description: "Use a professional CV template built for Nigerian professionals. Structured, ATS-friendly, and free. Stand out to employers with a clean, modern CV format.",
+  description: "Use a professional CV template built for Nigerian professionals. Structured, ATS-friendly, and free. Stand out with a clean, modern CV format.",
 };
 
 export default function ProfessionalCVTemplatePage() {
   return (
     <>
-      <header className="site-header">
-        <nav>
-          <Link href="/" className="logo-link">
-            <Image
-              src="/logo/seavitae-logo.png"
-              alt="SeaVitae"
-              width={140}
-              height={36}
-              priority
-            />
-          </Link>
-          <ul className="nav-links">
-            <li>
-              <Link href="/about">About Us</Link>
-            </li>
-            <li>
-              <Link href="/get-started">Get Started</Link>
-            </li>
-            <li>
-              <Link href="/login">Login</Link>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main>
         <header>
@@ -211,28 +189,14 @@ export default function ProfessionalCVTemplatePage() {
 
         <section id="cta">
           <h2>Start With a Professional CV Template</h2>
-          <p>Free, structured, and ready for employers.</p>
+          <p>Free, structured, and ready to send.</p>
           <div className="cta-buttons">
-            <Link href="/jobseeker/signup">Create Free CV</Link>
-            <Link href="/get-started">Learn More</Link>
+            <Link href="/jobseeker">Create My Free CV</Link>
           </div>
         </section>
       </main>
 
-      <footer>
-        <p>SeaVitae</p>
-        <p>A sea of careers, searchable.</p>
-        <nav>
-          <ul>
-            <li>
-              <Link href="/terms">Terms of Service</Link>
-            </li>
-            <li>
-              <Link href="/privacy">Privacy Policy</Link>
-            </li>
-          </ul>
-        </nav>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
