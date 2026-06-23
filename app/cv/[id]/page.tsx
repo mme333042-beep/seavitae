@@ -17,6 +17,7 @@ interface CVProfilePageProps {
 
 interface CVData {
   fullName: string;
+  linkedin: string;
   city: string;
   preferredRole: string;
   bio: string;
@@ -57,6 +58,7 @@ function transformToCVData(
 
   return {
     fullName: jobseeker.full_name,
+    linkedin: jobseeker.linkedin_url || "",
     city: jobseeker.city || "",
     preferredRole: jobseeker.preferred_role || "",
     bio: jobseeker.bio || "",

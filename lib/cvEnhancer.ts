@@ -159,6 +159,7 @@ const ATS_LIMITS = {
   SKILL_MAX_WORDS: 2,
   MAX_SKILLS_TO_ADD: 3, // Prevent content expansion
   MAX_KEYWORDS_TO_ADD: 2, // Prevent keyword stuffing
+  MAX_SKILLS_TOTAL: 5, // Hard cap: a CV should never list more than 5 skills
 };
 
 // Vague/filler skills to remove
@@ -247,6 +248,26 @@ function normalizeLocation(location: string): string {
   normalized = normalized.split(', ').map(part => toTitleCase(part.trim())).join(', ');
 
   return normalized;
+}
+
+/**
+ * Normalizes a jobseeker's city/town for the CV.
+ *
+ * Business rule: every town must be displayed as "Town, Nigeria". If the user
+ * only types the town (e.g. "Abuja"), or types the country sloppily
+ * (e.g. "abuja nigeria"), this normalizes it to "Abuja, Nigeria".
+ */
+function normalizeCity(city: string): string {
+  if (!city || !city.trim()) return city;
+
+  let normalized = normalizeLocation(city);
+
+  // Strip any existing trailing "Nigeria" (with or without a comma) so we can
+  // re-append it in the canonical "Town, Nigeria" form.
+  normalized = normalized.replace(/[\s,]*nigeria\s*$/i, '');
+  normalized = normalized.replace(/[\s,]+$/, '').trim();
+
+  return normalized ? `${normalized}, Nigeria` : 'Nigeria';
 }
 
 /**
@@ -814,20 +835,21 @@ export function enhanceSkills(
   // This ensures skills are ALWAYS normalized
   if (finalSkills.length === 0 && normalizedSkills.length > 0) {
     console.warn('[CV Enhancement] All skills were filler - keeping normalized versions');
-    return normalizedSkills; // Return normalized, not original
+    return normalizedSkills.slice(0, ATS_LIMITS.MAX_SKILLS_TOTAL); // Return normalized, not original
   }
 
   // FALLBACK: Only if literally empty
   if (finalSkills.length === 0 && skills.length > 0) {
     console.warn('[CV Enhancement] Skills became empty - using normalized originals');
     // Return at least normalized versions
-    return skills.map(s => ({
+    return skills.slice(0, ATS_LIMITS.MAX_SKILLS_TOTAL).map(s => ({
       ...s,
       name: toTitleCase(s.name.trim().slice(0, 30)) // Basic normalization
     }));
   }
 
-  return finalSkills;
+  // Hard cap: never list more than 5 skills on the CV
+  return finalSkills.slice(0, ATS_LIMITS.MAX_SKILLS_TOTAL);
 }
 
 /**
@@ -1035,10 +1057,10 @@ export function enhanceCV(data: CVData): EnhancedCVData {
     enhancedCertifications = data.certifications;
   }
 
-  // 8. Normalize city
+  // 8. Normalize city (always rendered as "Town, Nigeria")
   let enhancedCity: string;
   try {
-    enhancedCity = normalizeLocation(data.city);
+    enhancedCity = normalizeCity(data.city);
     enhancedCity = fallbackIfEmpty(enhancedCity, data.city);
   } catch (err) {
     console.error('[CV Enhancement] City failed:', err);

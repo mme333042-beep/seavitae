@@ -32,6 +32,7 @@ interface FormValues {
   age: number | null;
   countryCode: string;
   phoneNumber: string;
+  linkedinUrl: string;
 }
 
 // Common country codes
@@ -114,6 +115,7 @@ export default function CreateProfilePage() {
     age: null,
     countryCode: "+234",
     phoneNumber: "",
+    linkedinUrl: "",
   });
 
   // Form state for sections
@@ -178,6 +180,7 @@ export default function CreateProfilePage() {
             age: profile.age || null,
             countryCode,
             phoneNumber,
+            linkedinUrl: profile.linkedin_url || "",
           });
 
           // Load CV data
@@ -334,6 +337,7 @@ export default function CreateProfilePage() {
     const phoneNumber = formData.get("phoneNumber") as string;
     // Format phone: "+234-8087035953"
     const phone = phoneNumber ? `${countryCode}-${phoneNumber.replace(/^0+/, '')}` : null;
+    const linkedinUrl = (formData.get("linkedinUrl") as string)?.trim() || null;
 
     try {
       let cvId = existingCVId;
@@ -476,6 +480,7 @@ export default function CreateProfilePage() {
           years_experience: yearsExperience,
           age,
           phone,
+          linkedin_url: linkedinUrl,
         });
 
         if (!result.success) {
@@ -500,6 +505,7 @@ export default function CreateProfilePage() {
             years_experience: yearsExperience,
             age,
             phone,
+            linkedin_url: linkedinUrl,
           })
           .eq("id", existingJobseekerId);
       }
@@ -605,6 +611,12 @@ export default function CreateProfilePage() {
                 />
               </div>
               <p className="form-help">Enter your number without the country code (e.g., 8087035953)</p>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="linkedinUrl">LinkedIn Profile</label>
+              <input type="url" id="linkedinUrl" name="linkedinUrl" placeholder="linkedin.com/in/yourname" defaultValue={formValues.linkedinUrl} />
+              <p className="form-help">Optional. Add your LinkedIn profile link to display it on your CV.</p>
             </div>
 
             <div className="form-group">

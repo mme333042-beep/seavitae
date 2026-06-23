@@ -55,6 +55,7 @@ function buildCVData(jobseeker: Jobseeker, sections: CVSection[], email?: string
     fullName: jobseeker.full_name,
     email: email || "",
     phone: jobseeker.phone || "",
+    linkedin: jobseeker.linkedin_url || "",
     city: jobseeker.city || "",
     preferredRole: jobseeker.preferred_role || "",
     bio: jobseeker.bio || "",

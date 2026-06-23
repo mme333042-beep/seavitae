@@ -16,6 +16,7 @@ export interface CVData {
   fullName: string;
   email?: string;
   phone?: string; // Format: "+234-8087035953"
+  linkedin?: string; // LinkedIn profile URL (optional)
   city: string;
   preferredRole: string;
   bio: string;
@@ -139,6 +140,30 @@ export function generatePrintableCV(cv: CVData): string {
       .map((item) => `<li>${esc(item)}</li>`)
       .join("")}</ul>`;
 
+  // How many items stay glued to their heading so a heading is never stranded
+  // alone at the bottom of a page (the heading + these items move together).
+  const KEEP_WITH_HEADING = 3;
+
+  /**
+   * Render a section as: heading + its first few items kept together as one
+   * unbreakable block, with any remaining items flowing normally afterwards.
+   * Returns "" when there is nothing to show.
+   */
+  const renderSection = (title: string, itemsHtml: string[]): string => {
+    const items = itemsHtml.filter(Boolean);
+    if (items.length === 0) return "";
+    const head = items.slice(0, KEEP_WITH_HEADING).join("");
+    const rest = items.slice(KEEP_WITH_HEADING).join("");
+    return `
+    <section class="section">
+      <div class="section-keep">
+        <h2 class="section-title">${esc(title)}</h2>
+        ${head}
+      </div>
+      ${rest}
+    </section>`;
+  };
+
   // -- Left column ----------------------------------------------------------
   const leftColumn = `
     <div class="col-left">
@@ -147,39 +172,23 @@ export function generatePrintableCV(cv: CVData): string {
         ${cv.preferredRole ? `<p class="cv-role">${esc(cv.preferredRole)}</p>` : ""}
       </header>
 
-      ${
-        cv.bio
-          ? `<section class="section">
-              <h2 class="section-title">${esc(labels.summary)}</h2>
-              <p class="summary-text">${esc(cv.bio)}</p>
-            </section>`
-          : ""
-      }
+      ${cv.bio ? renderSection(labels.summary, [`<p class="summary-text">${esc(cv.bio)}</p>`]) : ""}
 
-      ${
-        cv.experience.length > 0
-          ? `<section class="section">
-              <h2 class="section-title">${esc(labels.experience)}</h2>
-              ${cv.experience.map(experienceEntry).join("")}
-            </section>`
-          : ""
-      }
+      ${renderSection(labels.experience, cv.experience.map(experienceEntry))}
 
-      ${
-        cv.education.length > 0
-          ? `<section class="section">
-              <h2 class="section-title">${esc(labels.education)}</h2>
-              ${cv.education.map(educationEntry).join("")}
-            </section>`
-          : ""
-      }
+      ${renderSection(labels.education, cv.education.map(educationEntry))}
     </div>`;
 
   // -- Right column ---------------------------------------------------------
+  // Contact order (per spec): address, phone, email, LinkedIn.
+  const linkedinDisplay = cv.linkedin
+    ? cv.linkedin.replace(/^https?:\/\//i, "").replace(/\/+$/, "")
+    : "";
   const contactItems = [
     cv.city ? esc(cv.city) : "",
     cv.phone ? esc(cv.phone) : "",
     cv.email ? `<span class="contact-link">${esc(cv.email)}</span>` : "",
+    linkedinDisplay ? `<span class="contact-link">${esc(linkedinDisplay)}</span>` : "",
   ].filter(Boolean);
 
   const rightColumn = `
@@ -192,67 +201,38 @@ export function generatePrintableCV(cv: CVData): string {
           : ""
       }
 
-      ${
-        achievements.length > 0
-          ? `<section class="section">
-              <h2 class="section-title">${esc(labels.achievements)}</h2>
-              ${bulletList(achievements)}
-            </section>`
-          : ""
-      }
+      ${achievements.length > 0 ? renderSection(labels.achievements, [bulletList(achievements)]) : ""}
 
-      ${
-        cv.skills.length > 0
-          ? `<section class="section">
-              <h2 class="section-title">${esc(labels.skills)}</h2>
-              ${bulletList(cv.skills)}
-            </section>`
-          : ""
-      }
+      ${cv.skills.length > 0 ? renderSection(labels.skills, [bulletList(cv.skills)]) : ""}
 
-      ${
-        cv.languages.length > 0
-          ? `<section class="section">
-              <h2 class="section-title">Languages</h2>
-              ${cv.languages
-                .map(
-                  (lang) =>
-                    `<p class="kv"><span>${esc(lang.language)}</span><span class="kv-muted">${esc(
-                      lang.proficiency
-                    )}</span></p>`
-                )
-                .join("")}
-            </section>`
-          : ""
-      }
+      ${renderSection(
+        "Languages",
+        cv.languages.map(
+          (lang) =>
+            `<p class="kv"><span>${esc(lang.language)}</span><span class="kv-muted">${esc(
+              lang.proficiency
+            )}</span></p>`
+        )
+      )}
 
-      ${
-        cv.certifications.length > 0
-          ? `<section class="section">
-              <h2 class="section-title">Certifications</h2>
-              ${cv.certifications
-                .map(
-                  (cert) =>
-                    `<div class="stack-item">
+      ${renderSection(
+        "Certifications",
+        cv.certifications.map(
+          (cert) =>
+            `<div class="stack-item">
                       <p class="stack-title">${esc(cert.name)}</p>
                       <p class="stack-meta">${esc(cert.issuer)}${
                         cert.year ? ` (${esc(cert.year)})` : ""
                       }</p>
                     </div>`
-                )
-                .join("")}
-            </section>`
-          : ""
-      }
+        )
+      )}
 
-      ${
-        cv.projects.length > 0
-          ? `<section class="section">
-              <h2 class="section-title">Projects</h2>
-              ${cv.projects
-                .map(
-                  (proj) =>
-                    `<div class="stack-item">
+      ${renderSection(
+        "Projects",
+        cv.projects.map(
+          (proj) =>
+            `<div class="stack-item">
                       <p class="stack-title accent">${esc(proj.name)}</p>
                       ${proj.description ? `<p class="stack-meta">${esc(proj.description)}</p>` : ""}
                       ${
@@ -261,20 +241,14 @@ export function generatePrintableCV(cv: CVData): string {
                           : ""
                       }
                     </div>`
-                )
-                .join("")}
-            </section>`
-          : ""
-      }
+        )
+      )}
 
-      ${
-        cv.publications.length > 0
-          ? `<section class="section">
-              <h2 class="section-title">Publications</h2>
-              ${cv.publications
-                .map(
-                  (pub) =>
-                    `<div class="stack-item">
+      ${renderSection(
+        "Publications",
+        cv.publications.map(
+          (pub) =>
+            `<div class="stack-item">
                       <p class="stack-title">${esc(pub.title)}</p>
                       <p class="stack-meta italic">${esc(pub.venue)}</p>
                       ${
@@ -283,11 +257,8 @@ export function generatePrintableCV(cv: CVData): string {
                           : ""
                       }
                     </div>`
-                )
-                .join("")}
-            </section>`
-          : ""
-      }
+        )
+      )}
     </div>`;
 
   return `
@@ -424,11 +395,18 @@ export function generatePrintableCV(cv: CVData): string {
     .section-title { break-after: avoid; page-break-after: avoid; }
     .entry, .stack-item { break-inside: avoid; page-break-inside: avoid; }
 
-    @page { margin: 14mm; }
+    /* A heading + its first few items move to the next page together, so a
+       heading is never left stranded alone at the bottom of a page. */
+    .section-keep { break-inside: avoid; page-break-inside: avoid; }
+
+    /* Zero @page margin so the browser has no margin box to print its default
+       header/footer into (date, time, URL, page number) — this removes the
+       timestamp footer. Page padding is provided by the body instead. */
+    @page { margin: 0; }
 
     @media print {
       body {
-        padding: 0;
+        padding: 14mm;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
