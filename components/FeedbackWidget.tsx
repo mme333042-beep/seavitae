@@ -21,13 +21,14 @@ export default function FeedbackWidget() {
         href="/feedback"
         style={{
           display: "inline-block",
-          backgroundColor: "#1e40af",
-          color: "white",
+          backgroundColor: "var(--sv-navy)",
+          color: "var(--sv-white)",
           padding: "0.5rem 1rem",
-          borderRadius: "0.375rem",
-          fontSize: "0.875rem",
+          borderRadius: "var(--radius-full)",
+          fontSize: "var(--text-sm)",
+          fontWeight: 500,
           textDecoration: "none",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          boxShadow: "var(--shadow-md)",
         }}
       >
         Feedback

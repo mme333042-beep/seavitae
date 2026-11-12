@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: "The terms that govern your use of SeaVitae.",
+};
 
 export default function TermsOfServicePage() {
   return (
-    <main>
+    <>
+      <SiteHeader />
+      <main>
       <header>
         <h1>Terms of Service</h1>
         <p>Last updated: January 2025</p>
@@ -120,5 +130,7 @@ export default function TermsOfServicePage() {
         <Link href="/">Back to Home</Link>
       </nav>
     </main>
+      <SiteFooter />
+    </>
   );
 }

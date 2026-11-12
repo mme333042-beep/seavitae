@@ -4,6 +4,7 @@ import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
 import { resetPassword, validatePassword } from "@/lib/supabase/auth";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import AuthShell from "@/components/AuthShell";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -72,22 +73,22 @@ export default function ResetPasswordPage() {
   // Loading state while checking session
   if (validSession === null) {
     return (
-      <main>
+      <AuthShell>
         <section>
-          <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+          <div className="card" style={{ textAlign: "center" }}>
             <p>Loading...</p>
           </div>
         </section>
-      </main>
+      </AuthShell>
     );
   }
 
   // No valid session - link may have expired or been used
   if (!validSession) {
     return (
-      <main>
+      <AuthShell>
         <section>
-          <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+          <div className="card" style={{ textAlign: "center" }}>
             <h1 style={{ marginBottom: "var(--space-md)" }}>Link Expired</h1>
             <p style={{ marginBottom: "var(--space-xl)", color: "var(--sv-muted)" }}>
               This password reset link has expired or has already been used.
@@ -99,16 +100,16 @@ export default function ResetPasswordPage() {
             </Link>
           </div>
         </section>
-      </main>
+      </AuthShell>
     );
   }
 
   // Success state
   if (success) {
     return (
-      <main>
+      <AuthShell>
         <section>
-          <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+          <div className="card" style={{ textAlign: "center" }}>
             <div style={{ marginBottom: "var(--space-lg)" }}>
               <span style={{ fontSize: "3rem" }}>&#10003;</span>
             </div>
@@ -123,19 +124,19 @@ export default function ResetPasswordPage() {
             </Link>
           </div>
         </section>
-      </main>
+      </AuthShell>
     );
   }
 
   return (
-    <main>
+    <AuthShell>
       <header>
         <h1>Create New Password</h1>
         <p>Enter your new password below.</p>
       </header>
 
       <section>
-        <div className="card" style={{ maxWidth: "var(--max-width-narrow)" }}>
+        <div className="card">
           {error && (
             <div role="alert" className="alert alert-error">
               {error}
@@ -185,12 +186,12 @@ export default function ResetPasswordPage() {
           </form>
         </div>
 
-        <div style={{ marginTop: "var(--space-xl)", textAlign: "center" }}>
+        <div className="auth-footnote">
           <p>
             <Link href="/login">Back to Login</Link>
           </p>
         </div>
       </section>
-    </main>
+    </AuthShell>
   );
 }

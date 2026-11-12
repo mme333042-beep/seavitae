@@ -10,6 +10,7 @@ import {
   trackJobseekerEmailSubmitted,
   trackEmailVerificationSent,
 } from "@/lib/posthog";
+import AuthShell from "@/components/AuthShell";
 
 interface ValidationErrors {
   email?: string;
@@ -184,21 +185,21 @@ export default function JobseekerSignupPage() {
 
   if (checkingAuth) {
     return (
-      <main>
+      <AuthShell>
         <p>Loading...</p>
-      </main>
+      </AuthShell>
     );
   }
 
   if (showConfirmation) {
     return (
-      <main>
+      <AuthShell>
         <header>
           <h1>Check Your Email</h1>
         </header>
 
         <section>
-          <div className="card" style={{ maxWidth: "var(--max-width-narrow)" }}>
+          <div className="card">
             <p style={{ marginBottom: "var(--space-md)" }}>
               We&apos;ve sent a confirmation link to <strong>{pendingEmail}</strong>.
             </p>
@@ -281,19 +282,19 @@ export default function JobseekerSignupPage() {
             </div>
           </div>
         </section>
-      </main>
+      </AuthShell>
     );
   }
 
   return (
-    <main>
+    <AuthShell>
       <header>
         <h1>Create Your Account</h1>
         <p>Sign up to create a professional, ATS-friendly CV in minutes.</p>
       </header>
 
       <section>
-        <div className="card" style={{ maxWidth: "var(--max-width-narrow)" }}>
+        <div className="card">
           {errors.general && (
             <div role="alert" className="alert alert-error">
               {errors.general}
@@ -426,12 +427,12 @@ export default function JobseekerSignupPage() {
           </form>
         </div>
 
-        <div style={{ marginTop: "var(--space-xl)", textAlign: "center" }}>
+        <div className="auth-footnote">
           <p>
             Already have an account? <Link href="/login">Login</Link>
           </p>
         </div>
       </section>
-    </main>
+    </AuthShell>
   );
 }

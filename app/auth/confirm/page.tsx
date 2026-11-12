@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { trackEmailVerified } from "@/lib/posthog";
+import AuthShell from "@/components/AuthShell";
 
 type ConfirmationState = "loading" | "success" | "already_confirmed" | "expired" | "error";
 
@@ -95,7 +96,7 @@ function ConfirmEmailContent() {
   if (state === "loading") {
     return (
       <section>
-        <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+        <div className="card" style={{ textAlign: "center" }}>
           <p>Processing confirmation...</p>
         </div>
       </section>
@@ -105,7 +106,7 @@ function ConfirmEmailContent() {
   if (state === "success") {
     return (
       <section>
-        <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+        <div className="card" style={{ textAlign: "center" }}>
           <div style={{ marginBottom: "var(--space-lg)" }}>
             <span style={{ fontSize: "3rem", color: "var(--sv-success, #22c55e)" }}>&#10003;</span>
           </div>
@@ -126,7 +127,7 @@ function ConfirmEmailContent() {
   if (state === "already_confirmed") {
     return (
       <section>
-        <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+        <div className="card" style={{ textAlign: "center" }}>
           <h1 style={{ marginBottom: "var(--space-md)" }}>Already Confirmed</h1>
           <p style={{ marginBottom: "var(--space-xl)", color: "var(--sv-muted)" }}>
             Your email is already confirmed. You can log in to your account.
@@ -144,7 +145,7 @@ function ConfirmEmailContent() {
   if (state === "expired") {
     return (
       <section>
-        <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+        <div className="card" style={{ textAlign: "center" }}>
           <h1 style={{ marginBottom: "var(--space-md)" }}>Link Expired</h1>
           <p style={{ marginBottom: "var(--space-lg)", color: "var(--sv-muted)" }}>
             This confirmation link has expired or is invalid.
@@ -182,7 +183,7 @@ function ConfirmEmailContent() {
   // Error state
   return (
     <section>
-      <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+      <div className="card" style={{ textAlign: "center" }}>
         <h1 style={{ marginBottom: "var(--space-md)" }}>Confirmation Failed</h1>
         <p style={{ marginBottom: "var(--space-lg)", color: "var(--sv-muted)" }}>
           {errorMessage || "Something went wrong during email confirmation."}
@@ -206,16 +207,16 @@ function ConfirmEmailContent() {
 
 export default function ConfirmEmailPage() {
   return (
-    <main>
+    <AuthShell>
       <Suspense fallback={
         <section>
-          <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+          <div className="card" style={{ textAlign: "center" }}>
             <p>Loading...</p>
           </div>
         </section>
       }>
         <ConfirmEmailContent />
       </Suspense>
-    </main>
+    </AuthShell>
   );
 }

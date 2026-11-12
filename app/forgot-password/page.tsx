@@ -4,6 +4,7 @@ import { FormEvent, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { requestPasswordReset } from "@/lib/supabase/auth";
+import AuthShell from "@/components/AuthShell";
 
 function ForgotPasswordForm() {
   const searchParams = useSearchParams();
@@ -50,9 +51,9 @@ function ForgotPasswordForm() {
 
   if (success) {
     return (
-      <main>
+      <AuthShell>
         <section>
-          <div className="card" style={{ maxWidth: "var(--max-width-narrow)", textAlign: "center" }}>
+          <div className="card" style={{ textAlign: "center" }}>
             <div style={{ marginBottom: "var(--space-lg)" }}>
               <span style={{ fontSize: "3rem" }}>&#9993;</span>
             </div>
@@ -70,19 +71,19 @@ function ForgotPasswordForm() {
             </Link>
           </div>
         </section>
-      </main>
+      </AuthShell>
     );
   }
 
   return (
-    <main>
+    <AuthShell>
       <header>
         <h1>Reset Your Password</h1>
         <p>Enter your email address and we&apos;ll send you a link to reset your password.</p>
       </header>
 
       <section>
-        <div className="card" style={{ maxWidth: "var(--max-width-narrow)" }}>
+        <div className="card">
           {error && (
             <div role="alert" className="alert alert-error">
               {error}
@@ -111,19 +112,19 @@ function ForgotPasswordForm() {
           </form>
         </div>
 
-        <div style={{ marginTop: "var(--space-xl)", textAlign: "center" }}>
+        <div className="auth-footnote">
           <p>
             Remember your password? <Link href="/login">Back to Login</Link>
           </p>
         </div>
       </section>
-    </main>
+    </AuthShell>
   );
 }
 
 export default function ForgotPasswordPage() {
   return (
-    <Suspense fallback={<main><p>Loading...</p></main>}>
+    <Suspense fallback={<AuthShell><p>Loading...</p></AuthShell>}>
       <ForgotPasswordForm />
     </Suspense>
   );

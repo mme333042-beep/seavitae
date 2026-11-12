@@ -4,11 +4,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState, Suspense } from "react";
 import Link from "next/link";
 import { signIn } from "@/lib/supabase/auth";
+import AuthShell from "@/components/AuthShell";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reason = searchParams.get("reason");
+  // Middleware sends users here with ?redirect=/path when they hit a protected
+  // page while logged out. Only honour same-site relative paths.
+  const redirectParam = searchParams.get("redirect");
+  const safeRedirect =
+    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+      ? redirectParam
+      : null;
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
 
@@ -45,8 +53,10 @@ function LoginForm() {
         return;
       }
 
-      // Redirect based on role and profile status
-      if (result.redirectPath) {
+      // Redirect based on role and profile status (or back to where they were going)
+      if (safeRedirect) {
+        router.push(safeRedirect);
+      } else if (result.redirectPath) {
         router.push(result.redirectPath);
       } else {
         router.push("/");
@@ -59,20 +69,20 @@ function LoginForm() {
   }
 
   return (
-    <main>
+    <AuthShell>
       <header>
-        <h1>Login to SeaVitae</h1>
-        <p>Welcome back. Enter your credentials to continue.</p>
+        <h1>Welcome back</h1>
+        <p>Log in to view, edit or download your CV.</p>
       </header>
 
       <section>
         {reason === "inactivity" && (
-          <div role="alert" className="alert alert-info" style={{ maxWidth: "var(--max-width-narrow)", marginBottom: "var(--space-md)" }}>
+          <div role="alert" className="alert alert-info" style={{ marginBottom: "var(--space-md)" }}>
             You were logged out due to inactivity. Please log in again.
           </div>
         )}
 
-        <div className="card" style={{ maxWidth: "var(--max-width-narrow)" }}>
+        <div className="card">
           {errors.general && (
             <div role="alert" className="alert alert-error">
               {errors.general}
@@ -106,19 +116,19 @@ function LoginForm() {
           </form>
         </div>
 
-        <div style={{ marginTop: "var(--space-xl)", textAlign: "center" }}>
+        <div className="auth-footnote">
           <p>
             Don&apos;t have an account? <Link href="/jobseeker/signup">Sign up</Link>
           </p>
         </div>
       </section>
-    </main>
+    </AuthShell>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main><p>Loading...</p></main>}>
+    <Suspense fallback={<AuthShell><p>Loading...</p></AuthShell>}>
       <LoginForm />
     </Suspense>
   );

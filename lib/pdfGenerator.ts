@@ -97,12 +97,31 @@ function renderDescription(description: string): string {
   return `<p class="entry-desc">${esc(description)}</p>`;
 }
 
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/**
+ * Turn a month-input value ("2022-03") into a readable "Mar 2022".
+ * Anything that is not in YYYY-MM form is returned unchanged.
+ */
+function formatMonth(value: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec((value || "").trim());
+  if (!match) return value || "";
+  const month = parseInt(match[2], 10);
+  if (month < 1 || month > 12) return value;
+  return `${MONTH_NAMES[month - 1]} ${match[1]}`;
+}
+
 /**
  * Format an experience date range.
  */
 function formatRange(startDate: string, endDate: string): string {
-  const start = esc(startDate);
-  const end = endDate ? esc(endDate) : "Present";
+  const start = esc(formatMonth(startDate));
+  const end = endDate && endDate.toLowerCase() !== "present"
+    ? esc(formatMonth(endDate))
+    : "Present";
   return start ? `${start} – ${end}` : end;
 }
 
@@ -424,10 +443,68 @@ export function generatePrintableCV(cv: CVData): string {
 }
 
 /**
- * Download CV as PDF using browser print
+ * Download CV as PDF using the browser's print dialog ("Save as PDF").
+ *
+ * The document is printed from a hidden same-origin iframe rather than a
+ * popup window, so popup blockers can never swallow the download. Falls back
+ * to a popup only if the iframe approach is unavailable.
  */
 export function downloadCVAsPDF(cv: CVData): void {
   const printContent = generatePrintableCV(cv);
+
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  frame.title = "CV print frame";
+  frame.style.position = "fixed";
+  frame.style.right = "0";
+  frame.style.bottom = "0";
+  frame.style.width = "0";
+  frame.style.height = "0";
+  frame.style.border = "0";
+  frame.style.opacity = "0";
+  frame.style.pointerEvents = "none";
+
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    frame.remove();
+  };
+
+  frame.onload = async () => {
+    const win = frame.contentWindow;
+    if (!win) {
+      cleanup();
+      openPrintPopup(printContent);
+      return;
+    }
+
+    // Wait for web fonts so the printed layout matches the preview.
+    try {
+      await win.document.fonts?.ready;
+    } catch {
+      // ignore - print with whatever fonts are available
+    }
+
+    win.addEventListener("afterprint", cleanup);
+    // Safety net: some browsers never fire afterprint.
+    setTimeout(cleanup, 60_000);
+
+    try {
+      win.focus();
+      win.print();
+    } catch {
+      cleanup();
+      openPrintPopup(printContent);
+    }
+  };
+
+  frame.srcdoc = printContent;
+  document.body.appendChild(frame);
+}
+
+/** Legacy fallback: print from a new window. */
+function openPrintPopup(printContent: string): void {
   const printWindow = window.open("", "_blank");
 
   if (!printWindow) {
@@ -435,10 +512,10 @@ export function downloadCVAsPDF(cv: CVData): void {
     return;
   }
 
+  printWindow.document.open();
   printWindow.document.write(printContent);
   printWindow.document.close();
 
-  // Wait for content (and web fonts) to load, then trigger print.
   printWindow.onload = () => {
     setTimeout(() => {
       printWindow.print();

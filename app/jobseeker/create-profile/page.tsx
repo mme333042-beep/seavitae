@@ -10,6 +10,7 @@ import { createJobseekerProfile, getMyJobseekerProfile, getMyCV, updateCVSection
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { CVSectionType } from "@/lib/supabase/types";
 import { enhanceCV } from "@/lib/cvEnhancer";
+import AppHeader from "@/components/AppHeader";
 
 interface ExperienceEntry {
   id: string;
@@ -94,11 +95,52 @@ interface PublicationEntry {
   url: string;
 }
 
+const newExperience = (): ExperienceEntry => ({
+  id: crypto.randomUUID(), title: "", company: "", location: "", startDate: "", endDate: "", current: false, description: "",
+});
+const newEducation = (): EducationEntry => ({
+  id: crypto.randomUUID(), degree: "", institution: "", location: "", graduationYear: 0,
+});
+const newLanguage = (): LanguageEntry => ({ id: crypto.randomUUID(), name: "", proficiency: "" });
+const newCertification = (): CertificationEntry => ({ id: crypto.randomUUID(), name: "", issuer: "", issueDate: "" });
+const newProject = (): ProjectEntry => ({ id: crypto.randomUUID(), name: "", description: "", url: "" });
+const newPublication = (): PublicationEntry => ({ id: crypto.randomUUID(), title: "", publisher: "", url: "" });
+
+/** Small header row inside an entry card: "Experience 2" + Remove. */
+function EntryHeader({
+  label,
+  index,
+  onRemove,
+}: {
+  label: string;
+  index: number;
+  onRemove?: () => void;
+}) {
+  return (
+    <div className="entry-header">
+      <span>
+        {label} {index + 1}
+      </span>
+      {onRemove && (
+        <button
+          type="button"
+          className="remove-btn"
+          onClick={onRemove}
+          aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
+        >
+          Remove
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function CreateProfilePage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editLocked, setEditLocked] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [existingJobseekerId, setExistingJobseekerId] = useState<string | null>(null);
@@ -119,24 +161,12 @@ export default function CreateProfilePage() {
   });
 
   // Form state for sections
-  const [experiences, setExperiences] = useState<ExperienceEntry[]>([
-    { id: crypto.randomUUID(), title: "", company: "", location: "", startDate: "", endDate: "", current: false, description: "" },
-  ]);
-  const [educations, setEducations] = useState<EducationEntry[]>([
-    { id: crypto.randomUUID(), degree: "", institution: "", location: "", graduationYear: 0 },
-  ]);
-  const [languages, setLanguages] = useState<LanguageEntry[]>([
-    { id: crypto.randomUUID(), name: "", proficiency: "" },
-  ]);
-  const [certifications, setCertifications] = useState<CertificationEntry[]>([
-    { id: crypto.randomUUID(), name: "", issuer: "", issueDate: "" },
-  ]);
-  const [projects, setProjects] = useState<ProjectEntry[]>([
-    { id: crypto.randomUUID(), name: "", description: "", url: "" },
-  ]);
-  const [publications, setPublications] = useState<PublicationEntry[]>([
-    { id: crypto.randomUUID(), title: "", publisher: "", url: "" },
-  ]);
+  const [experiences, setExperiences] = useState<ExperienceEntry[]>([newExperience()]);
+  const [educations, setEducations] = useState<EducationEntry[]>([newEducation()]);
+  const [languages, setLanguages] = useState<LanguageEntry[]>([newLanguage()]);
+  const [certifications, setCertifications] = useState<CertificationEntry[]>([newCertification()]);
+  const [projects, setProjects] = useState<ProjectEntry[]>([newProject()]);
+  const [publications, setPublications] = useState<PublicationEntry[]>([newPublication()]);
 
   useEffect(() => {
     async function checkAuth() {
@@ -188,9 +218,10 @@ export default function CreateProfilePage() {
           if (cvData && cvData.cv) {
             setExistingCVId(cvData.cv.id);
 
-            // Check if editing is locked (when jobseeker is visible to employers)
+            // Legacy state: editing is locked while the old "visible to
+            // employers" flag is on. The dashboard offers a one-click unlock.
             if (profile.is_visible) {
-              setError("Your CV is locked while visible to employers. Turn off visibility from your dashboard to edit.");
+              setEditLocked(true);
             }
 
             // Load CV sections into form
@@ -292,33 +323,13 @@ export default function CreateProfilePage() {
     checkAuth();
   }, [router]);
 
-  function addExperience() {
-    setExperiences([...experiences, { id: crypto.randomUUID(), title: "", company: "", location: "", startDate: "", endDate: "", current: false, description: "" }]);
-  }
-
-  function addEducation() {
-    setEducations([...educations, { id: crypto.randomUUID(), degree: "", institution: "", location: "", graduationYear: 0 }]);
-  }
-
-  function addLanguage() {
-    setLanguages([...languages, { id: crypto.randomUUID(), name: "", proficiency: "" }]);
-  }
-
-  function addCertification() {
-    setCertifications([...certifications, { id: crypto.randomUUID(), name: "", issuer: "", issueDate: "" }]);
-  }
-
-  function addProject() {
-    setProjects([...projects, { id: crypto.randomUUID(), name: "", description: "", url: "" }]);
-  }
-
-  function addPublication() {
-    setPublications([...publications, { id: crypto.randomUUID(), title: "", publisher: "", url: "" }]);
+  function removeById<T extends { id: string }>(setter: React.Dispatch<React.SetStateAction<T[]>>, id: string) {
+    setter(prev => prev.filter(item => item.id !== id));
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!userId) return;
+    if (!userId || editLocked) return;
 
     setSaving(true);
     setError(null);
@@ -334,7 +345,7 @@ export default function CreateProfilePage() {
     const age = parseInt(formData.get("age") as string) || null;
     const skillsText = formData.get("skills") as string;
     const countryCode = formData.get("countryCode") as string;
-    const phoneNumber = formData.get("phoneNumber") as string;
+    const phoneNumber = (formData.get("phoneNumber") as string || "").replace(/\s+/g, "");
     // Format phone: "+234-8087035953"
     const phone = phoneNumber ? `${countryCode}-${phoneNumber.replace(/^0+/, '')}` : null;
     const linkedinUrl = (formData.get("linkedinUrl") as string)?.trim() || null;
@@ -439,11 +450,11 @@ export default function CreateProfilePage() {
         console.warn('[CV Save] AI enhancement failed, using regex fallback');
       }
 
-      // Try AI enhancement for experience descriptions
-      const enhancedExperiences = [...enhancedCV.experiences];
-      for (let i = 0; i < enhancedExperiences.length; i++) {
-        const exp = enhancedExperiences[i];
-        if (exp.description && exp.description.length > 20) {
+      // Try AI enhancement for experience descriptions (in parallel: each
+      // request is independent, so the save is not slowed down per entry).
+      const enhancedExperiences = await Promise.all(
+        enhancedCV.experiences.map(async (exp, i) => {
+          if (!exp.description || exp.description.length <= 20) return exp;
           try {
             const aiResponse = await fetch('/api/enhance-summary', {
               method: 'POST',
@@ -459,16 +470,17 @@ export default function CreateProfilePage() {
             if (aiResponse.ok) {
               const aiData = await aiResponse.json();
               if (aiData.enhanced && aiData.method === 'ai') {
-                enhancedExperiences[i] = { ...exp, description: aiData.enhanced };
                 console.log(`[CV Save] Experience ${i + 1} enhanced via AI`);
+                return { ...exp, description: aiData.enhanced as string };
               }
             }
           } catch {
             // AI failed silently - keep regex-enhanced version
             console.warn(`[CV Save] Experience ${i + 1} AI enhancement failed`);
           }
-        }
-      }
+          return exp;
+        })
+      );
 
       // Create or update jobseeker profile with enhanced data
       if (!existingJobseekerId) {
@@ -495,7 +507,7 @@ export default function CreateProfilePage() {
       } else {
         // Update existing profile with enhanced data
         const supabase = getSupabaseClient();
-        await supabase
+        const { error: updateError } = await supabase
           .from("jobseekers")
           .update({
             full_name: fullName,
@@ -508,6 +520,12 @@ export default function CreateProfilePage() {
             linkedin_url: linkedinUrl,
           })
           .eq("id", existingJobseekerId);
+
+        if (updateError) {
+          setError(updateError.message || "Failed to update profile");
+          setSaving(false);
+          return;
+        }
       }
 
       if (!cvId) {
@@ -531,7 +549,12 @@ export default function CreateProfilePage() {
       ];
 
       for (const section of sectionsToSave) {
-        await updateCVSection(cvId, section.type, section.content);
+        const result = await updateCVSection(cvId, section.type, section.content);
+        if (!result.success) {
+          setError(result.error || "Failed to save your CV. Please try again.");
+          setSaving(false);
+          return;
+        }
       }
 
       trackEvent("cv_created", {
@@ -551,339 +574,406 @@ export default function CreateProfilePage() {
 
   if (loading) {
     return (
-      <main>
-        <p>Loading...</p>
-      </main>
+      <>
+        <AppHeader showDashboardLink={false} />
+        <main>
+          <div className="loading-state">
+            <p>Loading...</p>
+          </div>
+        </main>
+      </>
     );
   }
 
+  const isEditing = !!existingJobseekerId;
+
   return (
-    <main>
-      <Link href="/jobseeker/dashboard" className="back-link">Back to Dashboard</Link>
+    <>
+      <AppHeader userName={formValues.fullName || undefined} showDashboardLink={isEditing} />
 
-      <header>
-        <h1>{existingJobseekerId ? "Edit Your CV" : "Create Your CV"}</h1>
-        <p>Build your professional CV. Employers will discover you based on this information.</p>
-      </header>
+      <main>
+        <header>
+          <h1>{isEditing ? "Edit Your CV" : "Create Your CV"}</h1>
+          <p>
+            Fill in your details below. We will tidy the wording and lay everything
+            out as a clean, ATS-friendly PDF you can preview and download.
+          </p>
+        </header>
 
-      {error && (
-        <div role="alert" className="alert alert-error">
-          {error}
-        </div>
-      )}
+        {error && (
+          <div role="alert" className="alert alert-error">
+            {error}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit}>
-        {/* Basic Information */}
-        <section>
-          <h2>Basic Information *</h2>
+        {editLocked && (
+          <div className="edit-lock-banner">
+            <p>
+              <strong>Editing is locked</strong>
+            </p>
+            <p>
+              Go to your <Link href="/jobseeker/dashboard">dashboard</Link> and
+              choose &quot;Unlock editing&quot; to make changes.
+            </p>
+          </div>
+        )}
 
-          <fieldset>
-            <div className="form-group">
-              <label htmlFor="fullName">Full Name *</label>
-              <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required defaultValue={formValues.fullName} />
-            </div>
+        <form onSubmit={handleSubmit}>
+          <p className="required-note">Fields marked * are required.</p>
 
-            <div className="form-group">
-              <label htmlFor="city">City *</label>
-              <input type="text" id="city" name="city" placeholder="Lagos" required defaultValue={formValues.city} />
-            </div>
+          {/* Basic Information */}
+          <section>
+            <h2>Basic Information</h2>
 
-            <div className="form-group">
-              <label htmlFor="phoneNumber">Phone Number</label>
-              <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-                <select
-                  id="countryCode"
-                  name="countryCode"
-                  defaultValue={formValues.countryCode}
-                  style={{ width: "140px", flexShrink: 0 }}
-                >
-                  {COUNTRY_CODES.map(({ code, country }) => (
-                    <option key={code} value={code}>{code} ({country})</option>
-                  ))}
-                </select>
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  placeholder="8087035953"
-                  defaultValue={formValues.phoneNumber}
-                  style={{ flex: 1 }}
-                />
-              </div>
-              <p className="form-help">Enter your number without the country code (e.g., 8087035953)</p>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="linkedinUrl">LinkedIn Profile</label>
-              <input type="url" id="linkedinUrl" name="linkedinUrl" placeholder="linkedin.com/in/yourname" defaultValue={formValues.linkedinUrl} />
-              <p className="form-help">Optional. Add your LinkedIn profile link to display it on your CV.</p>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="preferredRole">Preferred Job Role *</label>
-              <input type="text" id="preferredRole" name="preferredRole" placeholder="Software Engineer" required defaultValue={formValues.preferredRole} />
-            </div>
-          </fieldset>
-        </section>
-
-        {/* Professional Summary */}
-        <section>
-          <h2>Professional Summary *</h2>
-
-          <fieldset>
-            <div className="form-group">
-              <label htmlFor="summary">Bio *</label>
-              <textarea id="summary" name="summary" rows={4} placeholder="Describe your professional background, key achievements, and what you're looking for." required defaultValue={formValues.summary} />
-            </div>
-          </fieldset>
-        </section>
-
-        {/* Skills */}
-        <section>
-          <h2>Skills *</h2>
-
-          <fieldset>
-            <div className="form-group">
-              <label htmlFor="skills">Skills *</label>
-              <textarea id="skills" name="skills" rows={2} placeholder="JavaScript, React, Node.js, Python, SQL" required defaultValue={formValues.skills} />
-              <p className="form-help">Separate skills with commas.</p>
-            </div>
-          </fieldset>
-        </section>
-
-        {/* Experience */}
-        <section>
-          <h2>Experience *</h2>
-
-          {experiences.map((exp, index) => (
-            <fieldset key={exp.id} className="entry-fieldset">
-              {index > 0 && <hr className="entry-divider" />}
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor={`experienceTitle${exp.id}`}>Job Title *</label>
-                  <input type="text" id={`experienceTitle${exp.id}`} name={`experienceTitle${exp.id}`} placeholder="Software Engineer" required={index === 0} defaultValue={exp.title} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor={`experienceCompany${exp.id}`}>Company *</label>
-                  <input type="text" id={`experienceCompany${exp.id}`} name={`experienceCompany${exp.id}`} placeholder="Company Name" required={index === 0} defaultValue={exp.company} />
-                </div>
+            <fieldset>
+              <div className="form-group">
+                <label htmlFor="fullName">Full Name *</label>
+                <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required autoComplete="name" defaultValue={formValues.fullName} />
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor={`experienceLocation${exp.id}`}>Location *</label>
-                  <input type="text" id={`experienceLocation${exp.id}`} name={`experienceLocation${exp.id}`} placeholder="Lagos, Nigeria" required={index === 0} defaultValue={exp.location} />
+                  <label htmlFor="preferredRole">Job Title *</label>
+                  <input type="text" id="preferredRole" name="preferredRole" placeholder="Software Engineer" required autoComplete="organization-title" defaultValue={formValues.preferredRole} />
+                  <p className="form-help">The role you want. Shown under your name on the CV.</p>
                 </div>
                 <div className="form-group">
-                  <label htmlFor={`experienceStart${exp.id}`}>Start Date *</label>
-                  <input type="month" id={`experienceStart${exp.id}`} name={`experienceStart${exp.id}`} required={index === 0} defaultValue={exp.startDate} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor={`experienceEnd${exp.id}`}>End Date</label>
-                  <input
-                    type="month"
-                    id={`experienceEnd${exp.id}`}
-                    name={`experienceEnd${exp.id}`}
-                    defaultValue={exp.endDate}
-                    disabled={exp.current}
-                  />
-                  <label className="checkbox-label" style={{ marginTop: "var(--space-sm)", display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
-                    <input
-                      type="checkbox"
-                      name={`experienceCurrent${exp.id}`}
-                      defaultChecked={exp.current}
-                      onChange={(e) => {
-                        setExperiences(prev => prev.map(item =>
-                          item.id === exp.id ? { ...item, current: e.target.checked } : item
-                        ));
-                      }}
-                      style={{ width: "auto" }}
-                    />
-                    <span>Present (Currently working here)</span>
-                  </label>
+                  <label htmlFor="city">City *</label>
+                  <input type="text" id="city" name="city" placeholder="Lagos" required autoComplete="address-level2" defaultValue={formValues.city} />
                 </div>
               </div>
 
               <div className="form-group">
-                <label htmlFor={`experienceDescription${exp.id}`}>Description *</label>
-                <textarea id={`experienceDescription${exp.id}`} name={`experienceDescription${exp.id}`} rows={2} placeholder="Key responsibilities and achievements" required={index === 0} defaultValue={exp.description} />
-              </div>
-            </fieldset>
-          ))}
-
-          <button type="button" className="add-btn" onClick={addExperience}>Add Experience</button>
-        </section>
-
-        {/* Education */}
-        <section>
-          <h2>Education *</h2>
-          <p className="form-help">Primary-secondary school education is not required. Please add education from university/college level upward.</p>
-
-          {educations.map((edu, index) => (
-            <fieldset key={edu.id} className="entry-fieldset">
-              {index > 0 && <hr className="entry-divider" />}
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor={`educationDegree${edu.id}`}>Degree *</label>
-                  <input type="text" id={`educationDegree${edu.id}`} name={`educationDegree${edu.id}`} placeholder="Master of Science in Computer Science" required={index === 0} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor={`educationInstitution${edu.id}`}>Institution *</label>
-                  <input type="text" id={`educationInstitution${edu.id}`} name={`educationInstitution${edu.id}`} placeholder="Stanford University" required={index === 0} />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor={`educationLocation${edu.id}`}>Location *</label>
-                  <input type="text" id={`educationLocation${edu.id}`} name={`educationLocation${edu.id}`} placeholder="Stanford, CA" required={index === 0} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor={`educationYear${edu.id}`}>Graduation Year *</label>
-                  <input type="number" id={`educationYear${edu.id}`} name={`educationYear${edu.id}`} placeholder="2018" min="1950" max="2030" required={index === 0} />
-                </div>
-              </div>
-            </fieldset>
-          ))}
-
-          <button type="button" className="add-btn" onClick={addEducation}>Add Education</button>
-        </section>
-
-        {/* Languages */}
-        <section>
-          <h2>Languages</h2>
-
-          {languages.map((lang, index) => (
-            <fieldset key={lang.id} className="entry-fieldset">
-              {index > 0 && <hr className="entry-divider" />}
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor={`language${lang.id}`}>Language</label>
-                  <input type="text" id={`language${lang.id}`} name={`language${lang.id}`} placeholder="English" />
-                </div>
-                <div className="form-group">
-                  <label htmlFor={`languageProficiency${lang.id}`}>Proficiency</label>
-                  <select id={`languageProficiency${lang.id}`} name={`languageProficiency${lang.id}`}>
-                    <option value="">Select</option>
-                    <option value="native">Native</option>
-                    <option value="fluent">Fluent</option>
-                    <option value="advanced">Advanced</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="basic">Basic</option>
+                <label htmlFor="phoneNumber">Phone Number</label>
+                <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+                  <select
+                    id="countryCode"
+                    name="countryCode"
+                    aria-label="Country code"
+                    defaultValue={formValues.countryCode}
+                    style={{ width: "150px", flexShrink: 0 }}
+                  >
+                    {COUNTRY_CODES.map(({ code, country }) => (
+                      <option key={code} value={code}>{code} ({country})</option>
+                    ))}
                   </select>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    placeholder="8087035953"
+                    autoComplete="tel-national"
+                    defaultValue={formValues.phoneNumber}
+                    style={{ flex: 1 }}
+                  />
                 </div>
+                <p className="form-help">Optional. Enter your number without the country code.</p>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="linkedinUrl">LinkedIn Profile</label>
+                <input type="url" id="linkedinUrl" name="linkedinUrl" placeholder="https://linkedin.com/in/yourname" autoComplete="url" defaultValue={formValues.linkedinUrl} />
+                <p className="form-help">Optional. Shown in the contact block of your CV.</p>
               </div>
             </fieldset>
-          ))}
+          </section>
 
-          <button type="button" className="add-btn" onClick={addLanguage}>Add Language</button>
-        </section>
+          {/* Professional Summary */}
+          <section>
+            <h2>Professional Summary</h2>
 
-        {/* Certifications */}
-        <section>
-          <h2>Certifications</h2>
+            <fieldset>
+              <div className="form-group">
+                <label htmlFor="summary">Summary *</label>
+                <textarea id="summary" name="summary" rows={4} placeholder="Describe your professional background, key achievements, and what you're looking for." required defaultValue={formValues.summary} />
+                <p className="form-help">Two to four sentences is ideal. We will sharpen the wording for you.</p>
+              </div>
+            </fieldset>
+          </section>
 
-          {certifications.map((cert, index) => (
-            <fieldset key={cert.id} className="entry-fieldset">
-              {index > 0 && <hr className="entry-divider" />}
+          {/* Skills */}
+          <section>
+            <h2>Skills</h2>
+
+            <fieldset>
+              <div className="form-group">
+                <label htmlFor="skills">Skills *</label>
+                <textarea id="skills" name="skills" rows={2} placeholder="JavaScript, React, Node.js, Python, SQL" required defaultValue={formValues.skills} />
+                <p className="form-help">Separate skills with commas. Your CV lists up to 5, so lead with the strongest.</p>
+              </div>
+            </fieldset>
+          </section>
+
+          {/* Experience */}
+          <section>
+            <h2>Experience</h2>
+            <p className="section-intro">Most recent role first.</p>
+
+            {experiences.map((exp, index) => (
+              <fieldset key={exp.id} className="entry-fieldset">
+                <EntryHeader
+                  label="Experience"
+                  index={index}
+                  onRemove={experiences.length > 1 ? () => removeById(setExperiences, exp.id) : undefined}
+                />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor={`experienceTitle${exp.id}`}>Job Title *</label>
+                    <input type="text" id={`experienceTitle${exp.id}`} name={`experienceTitle${exp.id}`} placeholder="Software Engineer" required={index === 0} defaultValue={exp.title} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor={`experienceCompany${exp.id}`}>Company *</label>
+                    <input type="text" id={`experienceCompany${exp.id}`} name={`experienceCompany${exp.id}`} placeholder="Company Name" required={index === 0} defaultValue={exp.company} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor={`experienceLocation${exp.id}`}>Location *</label>
+                    <input type="text" id={`experienceLocation${exp.id}`} name={`experienceLocation${exp.id}`} placeholder="Lagos, Nigeria" required={index === 0} defaultValue={exp.location} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor={`experienceStart${exp.id}`}>Start Date *</label>
+                    <input type="month" id={`experienceStart${exp.id}`} name={`experienceStart${exp.id}`} required={index === 0} defaultValue={exp.startDate} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor={`experienceEnd${exp.id}`}>End Date</label>
+                    <input
+                      type="month"
+                      id={`experienceEnd${exp.id}`}
+                      name={`experienceEnd${exp.id}`}
+                      defaultValue={exp.endDate}
+                      disabled={exp.current}
+                    />
+                    <label className="checkbox-label" style={{ marginTop: "var(--space-sm)" }}>
+                      <input
+                        type="checkbox"
+                        name={`experienceCurrent${exp.id}`}
+                        defaultChecked={exp.current}
+                        onChange={(e) => {
+                          setExperiences(prev => prev.map(item =>
+                            item.id === exp.id ? { ...item, current: e.target.checked } : item
+                          ));
+                        }}
+                      />
+                      <span>I currently work here</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor={`experienceDescription${exp.id}`}>What you did *</label>
+                  <textarea id={`experienceDescription${exp.id}`} name={`experienceDescription${exp.id}`} rows={4} placeholder={"Led a team of 5 to deliver the new checkout flow\nReduced customer complaints by 30% in six months"} required={index === 0} defaultValue={exp.description} />
+                  <p className="form-help">One achievement per line. Start with an action verb and add numbers where you can. Each line becomes a bullet point.</p>
+                </div>
+              </fieldset>
+            ))}
+
+            <button type="button" className="add-btn" onClick={() => setExperiences(prev => [...prev, newExperience()])}>Add Experience</button>
+          </section>
+
+          {/* Education */}
+          <section>
+            <h2>Education</h2>
+            <p className="section-intro">University or college level and above. Secondary school is not needed.</p>
+
+            {educations.map((edu, index) => (
+              <fieldset key={edu.id} className="entry-fieldset">
+                <EntryHeader
+                  label="Education"
+                  index={index}
+                  onRemove={educations.length > 1 ? () => removeById(setEducations, edu.id) : undefined}
+                />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor={`educationDegree${edu.id}`}>Degree *</label>
+                    <input type="text" id={`educationDegree${edu.id}`} name={`educationDegree${edu.id}`} placeholder="B.Sc. Computer Science" required={index === 0} defaultValue={edu.degree} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor={`educationInstitution${edu.id}`}>Institution *</label>
+                    <input type="text" id={`educationInstitution${edu.id}`} name={`educationInstitution${edu.id}`} placeholder="University of Lagos" required={index === 0} defaultValue={edu.institution} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor={`educationLocation${edu.id}`}>Location *</label>
+                    <input type="text" id={`educationLocation${edu.id}`} name={`educationLocation${edu.id}`} placeholder="Lagos, Nigeria" required={index === 0} defaultValue={edu.location} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor={`educationYear${edu.id}`}>Graduation Year *</label>
+                    <input type="number" id={`educationYear${edu.id}`} name={`educationYear${edu.id}`} placeholder="2018" min="1950" max="2035" required={index === 0} defaultValue={edu.graduationYear || ""} />
+                  </div>
+                </div>
+              </fieldset>
+            ))}
+
+            <button type="button" className="add-btn" onClick={() => setEducations(prev => [...prev, newEducation()])}>Add Education</button>
+          </section>
+
+          {/* Languages */}
+          <section>
+            <h2>Languages</h2>
+            <p className="section-intro">Optional.</p>
+
+            {languages.map((lang, index) => (
+              <fieldset key={lang.id} className="entry-fieldset">
+                <EntryHeader
+                  label="Language"
+                  index={index}
+                  onRemove={() => removeById(setLanguages, lang.id)}
+                />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor={`language${lang.id}`}>Language</label>
+                    <input type="text" id={`language${lang.id}`} name={`language${lang.id}`} placeholder="English" defaultValue={lang.name} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor={`languageProficiency${lang.id}`}>Proficiency</label>
+                    <select id={`languageProficiency${lang.id}`} name={`languageProficiency${lang.id}`} defaultValue={lang.proficiency}>
+                      <option value="">Select</option>
+                      <option value="native">Native</option>
+                      <option value="fluent">Fluent</option>
+                      <option value="advanced">Advanced</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="basic">Basic</option>
+                    </select>
+                  </div>
+                </div>
+              </fieldset>
+            ))}
+
+            <button type="button" className="add-btn" onClick={() => setLanguages(prev => [...prev, newLanguage()])}>Add Language</button>
+          </section>
+
+          {/* Certifications */}
+          <section>
+            <h2>Certifications</h2>
+            <p className="section-intro">Optional.</p>
+
+            {certifications.map((cert, index) => (
+              <fieldset key={cert.id} className="entry-fieldset">
+                <EntryHeader
+                  label="Certification"
+                  index={index}
+                  onRemove={() => removeById(setCertifications, cert.id)}
+                />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor={`certificationName${cert.id}`}>Certification</label>
+                    <input type="text" id={`certificationName${cert.id}`} name={`certificationName${cert.id}`} placeholder="AWS Certified Solutions Architect" defaultValue={cert.name} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor={`certificationIssuer${cert.id}`}>Issuer</label>
+                    <input type="text" id={`certificationIssuer${cert.id}`} name={`certificationIssuer${cert.id}`} placeholder="Amazon Web Services" defaultValue={cert.issuer} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor={`certificationYear${cert.id}`}>Year</label>
+                    <input type="number" id={`certificationYear${cert.id}`} name={`certificationYear${cert.id}`} placeholder="2022" min="1950" max="2035" defaultValue={cert.issueDate} />
+                  </div>
+                </div>
+              </fieldset>
+            ))}
+
+            <button type="button" className="add-btn" onClick={() => setCertifications(prev => [...prev, newCertification()])}>Add Certification</button>
+          </section>
+
+          {/* Projects */}
+          <section>
+            <h2>Projects</h2>
+            <p className="section-intro">Optional.</p>
+
+            {projects.map((proj, index) => (
+              <fieldset key={proj.id} className="entry-fieldset">
+                <EntryHeader
+                  label="Project"
+                  index={index}
+                  onRemove={() => removeById(setProjects, proj.id)}
+                />
+                <div className="form-group">
+                  <label htmlFor={`projectName${proj.id}`}>Project Name</label>
+                  <input type="text" id={`projectName${proj.id}`} name={`projectName${proj.id}`} placeholder="Inventory Management System" defaultValue={proj.name} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor={`projectDescription${proj.id}`}>Description</label>
+                  <textarea id={`projectDescription${proj.id}`} name={`projectDescription${proj.id}`} rows={2} placeholder="Brief description of the project and your role" defaultValue={proj.description} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor={`projectLink${proj.id}`}>Link</label>
+                  <input type="url" id={`projectLink${proj.id}`} name={`projectLink${proj.id}`} placeholder="https://" defaultValue={proj.url} />
+                </div>
+              </fieldset>
+            ))}
+
+            <button type="button" className="add-btn" onClick={() => setProjects(prev => [...prev, newProject()])}>Add Project</button>
+          </section>
+
+          {/* Publications */}
+          <section>
+            <h2>Publications</h2>
+            <p className="section-intro">Optional.</p>
+
+            {publications.map((pub, index) => (
+              <fieldset key={pub.id} className="entry-fieldset">
+                <EntryHeader
+                  label="Publication"
+                  index={index}
+                  onRemove={() => removeById(setPublications, pub.id)}
+                />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor={`publicationTitle${pub.id}`}>Title</label>
+                    <input type="text" id={`publicationTitle${pub.id}`} name={`publicationTitle${pub.id}`} placeholder="Scalable Deep Learning for Recommendations" defaultValue={pub.title} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor={`publicationVenue${pub.id}`}>Venue</label>
+                    <input type="text" id={`publicationVenue${pub.id}`} name={`publicationVenue${pub.id}`} placeholder="NeurIPS 2023" defaultValue={pub.publisher} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor={`publicationLink${pub.id}`}>Link</label>
+                  <input type="url" id={`publicationLink${pub.id}`} name={`publicationLink${pub.id}`} placeholder="https://" defaultValue={pub.url} />
+                </div>
+              </fieldset>
+            ))}
+
+            <button type="button" className="add-btn" onClick={() => setPublications(prev => [...prev, newPublication()])}>Add Publication</button>
+          </section>
+
+          {/* Experience level */}
+          <section>
+            <h2>Experience Level</h2>
+            <p className="section-intro">Used to tailor the wording of your summary. Not printed on your CV.</p>
+
+            <fieldset>
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor={`certificationName${cert.id}`}>Certification</label>
-                  <input type="text" id={`certificationName${cert.id}`} name={`certificationName${cert.id}`} placeholder="AWS Certified Machine Learning" />
+                  <label htmlFor="yearsExperience">Years of Experience *</label>
+                  <input type="number" id="yearsExperience" name="yearsExperience" placeholder="5" min="0" max="50" required style={{ maxWidth: "140px" }} defaultValue={formValues.yearsExperience || ""} />
                 </div>
                 <div className="form-group">
-                  <label htmlFor={`certificationIssuer${cert.id}`}>Issuer</label>
-                  <input type="text" id={`certificationIssuer${cert.id}`} name={`certificationIssuer${cert.id}`} placeholder="Amazon Web Services" />
-                </div>
-                <div className="form-group">
-                  <label htmlFor={`certificationYear${cert.id}`}>Year</label>
-                  <input type="number" id={`certificationYear${cert.id}`} name={`certificationYear${cert.id}`} placeholder="2022" min="1950" max="2030" />
+                  <label htmlFor="age">Age</label>
+                  <input type="number" id="age" name="age" placeholder="25" min="16" max="100" style={{ maxWidth: "140px" }} defaultValue={formValues.age || ""} />
+                  <p className="form-help">Optional. Never shown on your CV.</p>
                 </div>
               </div>
             </fieldset>
-          ))}
+          </section>
 
-          <button type="button" className="add-btn" onClick={addCertification}>Add Certification</button>
-        </section>
-
-        {/* Projects */}
-        <section>
-          <h2>Projects</h2>
-
-          {projects.map((proj, index) => (
-            <fieldset key={proj.id} className="entry-fieldset">
-              {index > 0 && <hr className="entry-divider" />}
-              <div className="form-group">
-                <label htmlFor={`projectName${proj.id}`}>Project Name</label>
-                <input type="text" id={`projectName${proj.id}`} name={`projectName${proj.id}`} placeholder="AI-Powered Recommendation System" />
-              </div>
-              <div className="form-group">
-                <label htmlFor={`projectDescription${proj.id}`}>Description</label>
-                <textarea id={`projectDescription${proj.id}`} name={`projectDescription${proj.id}`} rows={2} placeholder="Brief description of the project and your role" />
-              </div>
-              <div className="form-group">
-                <label htmlFor={`projectLink${proj.id}`}>Link</label>
-                <input type="url" id={`projectLink${proj.id}`} name={`projectLink${proj.id}`} placeholder="https://" />
-              </div>
-            </fieldset>
-          ))}
-
-          <button type="button" className="add-btn" onClick={addProject}>Add Project</button>
-        </section>
-
-        {/* Publications */}
-        <section>
-          <h2>Publications</h2>
-
-          {publications.map((pub, index) => (
-            <fieldset key={pub.id} className="entry-fieldset">
-              {index > 0 && <hr className="entry-divider" />}
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor={`publicationTitle${pub.id}`}>Title</label>
-                  <input type="text" id={`publicationTitle${pub.id}`} name={`publicationTitle${pub.id}`} placeholder="Scalable Deep Learning for Recommendations" />
-                </div>
-                <div className="form-group">
-                  <label htmlFor={`publicationVenue${pub.id}`}>Venue</label>
-                  <input type="text" id={`publicationVenue${pub.id}`} name={`publicationVenue${pub.id}`} placeholder="NeurIPS 2023" />
-                </div>
-              </div>
-              <div className="form-group">
-                <label htmlFor={`publicationLink${pub.id}`}>Link</label>
-                <input type="url" id={`publicationLink${pub.id}`} name={`publicationLink${pub.id}`} placeholder="https://" />
-              </div>
-            </fieldset>
-          ))}
-
-          <button type="button" className="add-btn" onClick={addPublication}>Add Publication</button>
-        </section>
-
-        {/* Additional Information */}
-        <section>
-          <h2>Additional Information</h2>
-          <p className="form-help">This information is used for filtering only and is never displayed on your CV.</p>
-
-          <fieldset>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="yearsExperience">Years of Experience *</label>
-                <input type="number" id="yearsExperience" name="yearsExperience" placeholder="5" min="0" max="50" required style={{ maxWidth: "120px" }} defaultValue={formValues.yearsExperience || ""} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="age">Age *</label>
-                <input type="number" id="age" name="age" placeholder="25" min="18" max="100" required style={{ maxWidth: "120px" }} defaultValue={formValues.age || ""} />
-                <p className="form-help">Used for filtering only. Not visible to employers.</p>
-              </div>
-            </div>
-          </fieldset>
-        </section>
-
-        {/* Submit */}
-        <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save CV"}</button>
-          <Link href="/jobseeker/dashboard">Cancel</Link>
-        </div>
-      </form>
-    </main>
+          {/* Submit */}
+          <div className="form-actions">
+            <button type="submit" disabled={saving || editLocked}>
+              {saving ? "Polishing your CV..." : isEditing ? "Save and Preview" : "Create My CV"}
+            </button>
+            {isEditing && <Link href="/jobseeker/dashboard" className="btn btn-secondary">Cancel</Link>}
+          </div>
+          {saving && (
+            <p className="form-help" style={{ marginTop: "var(--space-md)" }}>
+              Saving takes a few seconds while we tidy up your wording.
+            </p>
+          )}
+        </form>
+      </main>
+    </>
   );
 }

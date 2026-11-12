@@ -292,6 +292,7 @@ nav a:hover {
   position: sticky;
   top: 0;
   z-index: 100;
+  margin-bottom: 0;
 }
 
 .site-header nav {
@@ -301,6 +302,14 @@ nav a:hover {
   padding: var(--space-lg) var(--space-2xl);
   max-width: var(--max-width-content);
   margin: 0 auto;
+  /* The generic `header nav` rule below must not add a second border/background here */
+  background: transparent;
+  border-bottom: none;
+}
+
+.site-header .logo-link img {
+  display: block;
+  height: auto;
 }
 
 .site-header .logo-link {
@@ -376,6 +385,73 @@ header nav span {
   letter-spacing: var(--tracking-tight);
 }
 
+/* App Header (logged-in pages: dashboard, CV editor) */
+.app-header {
+  background-color: var(--sv-white);
+  border-bottom: 1px solid var(--sv-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin-bottom: 0;
+}
+
+.app-header nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-2xl);
+  max-width: var(--max-width-content);
+  margin: 0 auto;
+  background: transparent;
+  border-bottom: none;
+}
+
+.app-header .logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.app-header .logo-link img {
+  display: block;
+  height: auto;
+}
+
+.app-header .app-nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  min-width: 0;
+}
+
+.app-header .app-user {
+  font-size: var(--text-sm);
+  color: var(--sv-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 16rem;
+}
+
+.app-header .app-user strong {
+  color: var(--sv-navy);
+  font-weight: 500;
+}
+
+.app-header .app-nav-link {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--sv-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-header .app-nav-link:hover {
+  color: var(--sv-ocean);
+  text-decoration: none;
+}
+
 /* =========================
    Links
    ========================= */
@@ -388,6 +464,12 @@ a {
 a:hover {
   color: var(--sv-ocean-dark);
   text-decoration: underline;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--sv-ocean);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* =========================
@@ -1389,20 +1471,55 @@ details[open] summary {
 /* =========================
    CV Document Preview (mirrors the downloadable PDF)
    ========================= */
+/* The document is always laid out at its natural A4-ish width (820px) and
+   scaled down with a transform on narrow screens, so the two-column layout
+   never collapses or becomes unreadable on phones. */
 .cv-document {
   width: 100%;
   max-width: 820px;
   margin: 0 auto;
-}
-
-.cv-document-frame {
-  display: block;
-  width: 100%;
-  min-height: 600px;
+  overflow: hidden;
   border: 1px solid var(--sv-border);
   border-radius: var(--radius-md);
   background-color: var(--sv-white);
   box-shadow: var(--shadow-md);
+  min-height: 300px;
+}
+
+.cv-document-frame {
+  display: block;
+  width: 820px;
+  border: 0;
+  background-color: var(--sv-white);
+  transform-origin: top left;
+}
+
+.cv-document.is-static .cv-document-frame {
+  pointer-events: none;
+}
+
+/* Landing: sample CV preview */
+#preview {
+  padding: var(--space-xl) var(--space-xl);
+  max-width: var(--max-width-content);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#preview h2 {
+  text-align: center;
+  margin-bottom: var(--space-sm);
+}
+
+#preview .preview-caption {
+  text-align: center;
+  color: var(--sv-muted);
+  max-width: 36rem;
+  margin: 0 auto var(--space-xl);
+}
+
+#preview .cv-document {
+  max-width: 760px;
 }
 
 /* =========================
@@ -1795,15 +1912,161 @@ footer nav ul li a:hover {
   font-weight: bold;
 }
 
-/* Entry Fieldset */
+/* Entry Fieldset (one experience / education / project entry in the CV editor) */
 .entry-fieldset {
-  margin-bottom: var(--space-xl);
+  background-color: var(--sv-white);
+  border: 1px solid var(--sv-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.entry-fieldset .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.entry-fieldset .form-row:last-child {
+  margin-bottom: 0;
+}
+
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.entry-header span {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--sv-muted);
+}
+
+button.remove-btn {
+  background: none;
+  border: none;
+  color: var(--sv-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: var(--space-xs) var(--space-sm);
+  box-shadow: none;
+}
+
+button.remove-btn:hover {
+  color: var(--sv-error);
+  background-color: var(--sv-error-bg);
+  border: none;
+  box-shadow: none;
+  transform: none;
 }
 
 .entry-divider {
   border: none;
   border-top: 1px solid var(--sv-border-light);
   margin: var(--space-xl) 0;
+}
+
+/* Section intro text under an h2 in the CV editor */
+.section-intro {
+  color: var(--sv-muted);
+  font-size: var(--text-sm);
+  margin: calc(-1 * var(--space-sm)) 0 var(--space-lg);
+}
+
+.required-note {
+  font-size: var(--text-sm);
+  color: var(--sv-muted);
+  margin-bottom: var(--space-xl);
+}
+
+/* =========================
+   Auth pages (login, signup, password reset)
+   ========================= */
+.auth-main {
+  max-width: 30rem;
+}
+
+.auth-main header {
+  text-align: center;
+}
+
+.auth-main header p {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.auth-main .card {
+  padding: var(--space-2xl);
+}
+
+.auth-main form {
+  max-width: none;
+}
+
+.auth-main button[type="submit"] {
+  width: 100%;
+}
+
+.auth-main .auth-footnote {
+  margin-top: var(--space-xl);
+  text-align: center;
+  color: var(--sv-muted);
+}
+
+/* =========================
+   Loading state
+   ========================= */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  min-height: 40vh;
+  color: var(--sv-muted);
+}
+
+.loading-state::before {
+  content: "";
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--sv-border);
+  border-top-color: var(--sv-ocean);
+  border-radius: 50%;
+  animation: sv-spin 0.8s linear infinite;
+}
+
+.loading-state p {
+  margin: 0;
+  color: var(--sv-muted);
+}
+
+@keyframes sv-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================
+   Blog post list
+   ========================= */
+.post-list article h2 {
+  margin-top: 0;
+}
+
+.post-list article h2 a {
+  color: var(--sv-navy);
+}
+
+.post-list article h2 a:hover {
+  color: var(--sv-ocean);
+}
+
+.post-list .post-date {
+  font-size: var(--text-sm);
+  color: var(--sv-muted);
+  margin-bottom: var(--space-md);
 }
 
 /* =========================
@@ -1843,11 +2106,27 @@ footer nav ul li a:hover {
   }
 
   h1 {
-    font-size: var(--text-xl);
+    font-size: var(--text-2xl);
   }
 
   h2 {
-    font-size: var(--text-lg);
+    font-size: var(--text-xl);
+  }
+
+  .app-header nav {
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .app-header .app-user {
+    display: none;
+  }
+
+  #preview {
+    padding: var(--space-2xl) var(--space-lg);
+  }
+
+  .entry-fieldset {
+    padding: var(--space-lg);
   }
 
   #hero {
@@ -1891,7 +2170,13 @@ footer nav ul li a:hover {
 
   .dashboard-header-actions {
     width: 100%;
-    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-header-actions .btn,
+  .dashboard-header-actions button {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 
   .two-column {

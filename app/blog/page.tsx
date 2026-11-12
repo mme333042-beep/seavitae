@@ -42,21 +42,21 @@ export default function BlogPage() {
           <h1>Career &amp; CV Advice</h1>
         </header>
 
-        <section className="about-content">
+        <section className="about-content post-list">
           <p>
             Practical guides to help Nigerian professionals write better CVs,
             pass ATS filters, and land more interviews.
           </p>
 
           {posts.map((post) => (
-            <article key={post.slug} style={{ marginBottom: "2.5rem", paddingBottom: "2.5rem", borderBottom: "1px solid #e5e7eb" }}>
+            <article key={post.slug}>
               <h2>
                 <Link href={`/blog/${post.slug}`}>{post.title}</Link>
               </h2>
-              <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "0.75rem" }}>{post.date}</p>
+              <p className="post-date">{post.date}</p>
               <p>{post.excerpt}</p>
               <p>
-                <Link href={`/blog/${post.slug}`}>Read article →</Link>
+                <Link href={`/blog/${post.slug}`}>Read article</Link>
               </p>
             </article>
           ))}

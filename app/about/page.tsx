@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+
+export const metadata: Metadata = {
+  title: "About",
+  description:
+    "SeaVitae is a free online CV builder that helps professionals create clean, ATS-friendly CVs in minutes.",
+};
 
 export default function AboutPage() {
   return (

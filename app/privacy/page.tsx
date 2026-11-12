@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "How SeaVitae collects, uses and protects your personal information.",
+};
 
 export default function PrivacyPolicyPage() {
   return (
-    <main>
+    <>
+      <SiteHeader />
+      <main>
       <header>
         <h1>Privacy Policy</h1>
         <p>Last updated: January 2025</p>
@@ -181,5 +191,7 @@ export default function PrivacyPolicyPage() {
         <Link href="/">Back to Home</Link>
       </nav>
     </main>
+      <SiteFooter />
+    </>
   );
 }

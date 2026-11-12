@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import SampleCVPreview from "@/components/SampleCVPreview";
 
 export const metadata: Metadata = {
   title: "Create an ATS-Friendly CV Online | SeaVitae",
@@ -63,6 +64,16 @@ export default function Home() {
               </p>
             </div>
           </div>
+        </section>
+
+        {/* Sample output */}
+        <section id="preview" aria-labelledby="preview-heading">
+          <h2 id="preview-heading">What your CV will look like</h2>
+          <p className="preview-caption">
+            A sample CV built with SeaVitae. The preview you see while editing
+            is exactly what you download, so there are no surprises.
+          </p>
+          <SampleCVPreview />
         </section>
 
         {/* Why SeaVitae Section */}

@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+
+export const metadata: Metadata = {
+  title: "Get Started",
+  description:
+    "Create a professional, ATS-friendly CV in minutes. Add your details, let AI polish the wording, and download a recruiter-ready PDF.",
+};
 
 export default function GetStartedPage() {
   return (
